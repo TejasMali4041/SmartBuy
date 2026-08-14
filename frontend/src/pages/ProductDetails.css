@@ -1,0 +1,151 @@
+.product-details {
+  min-height: calc(100vh - 70px);
+  background: #f8fafc;
+  padding: 50px 80px;
+}
+
+.product-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  display: flex;
+  gap: 50px;
+  border: 1px solid #e5e7eb;
+}
+
+.product-image-large {
+  width: 400px;
+  height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.product-image-large img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.product-summary {
+  flex: 1;
+}
+
+.product-brand {
+  color: #6b7280;
+  margin-bottom: 10px;
+}
+
+.product-summary h1 {
+  font-size: 32px;
+  margin-bottom: 15px;
+  color: #111827;
+}
+
+.product-rating {
+  margin-bottom: 20px;
+  font-size: 17px;
+}
+
+.product-rating span {
+  color: #6b7280;
+}
+
+.product-description {
+  color: #4b5563;
+  line-height: 1.7;
+  margin-bottom: 25px;
+}
+
+/* Best Price */
+
+.best-price-box {
+  background: #f1f5f9;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 25px;
+  border: 1px solid #e2e8f0;
+}
+
+.best-price-box p {
+  color: #64748b;
+  margin-bottom: 5px;
+}
+
+.best-price-box h2 {
+  font-size: 30px;
+  margin-bottom: 5px;
+  color: #111827;
+}
+
+.best-price-box span {
+  color: #475569;
+}
+
+/* Buttons */
+
+.product-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.compare-button,
+.recommend-button {
+  display: inline-block;
+  text-decoration: none;
+  padding: 12px 20px;
+  border-radius: 7px;
+}
+
+.compare-button {
+  background: #2563eb;
+  color: white;
+}
+
+.recommend-button {
+  background: #111827;
+  color: white;
+}
+
+.compare-button:hover {
+  background: #1d4ed8;
+}
+
+.recommend-button:hover {
+  background: #374151;
+}
+
+/* Specifications */
+
+.specifications {
+  max-width: 1100px;
+  margin: 40px auto 0;
+}
+
+.specifications h2 {
+  margin-bottom: 20px;
+  color: #111827;
+}
+
+.spec-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.spec-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 18px 25px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.spec-item span {
+  color: #4b5563;
+}

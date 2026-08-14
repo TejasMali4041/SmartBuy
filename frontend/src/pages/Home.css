@@ -1,0 +1,80 @@
+.home {
+  min-height: calc(100vh - 70px);
+  background: #f8fafc;
+}
+
+.hero {
+  text-align: center;
+  padding: 90px 20px 70px;
+}
+
+.hero h1 {
+  font-size: 52px;
+  margin-bottom: 20px;
+  color: #111827;
+}
+
+.hero p {
+  font-size: 19px;
+  color: #6b7280;
+  max-width: 650px;
+  margin: 0 auto 35px;
+}
+
+.search-box {
+  display: flex;
+  max-width: 700px;
+  margin: auto;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.search-box input {
+  flex: 1;
+  padding: 18px;
+  border: none;
+  outline: none;
+  font-size: 16px;
+}
+
+.search-box button {
+  padding: 0 30px;
+  border: none;
+  background: #2563eb;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.search-box button:hover {
+  background: #1d4ed8;
+}
+
+.features {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  padding: 20px 60px 80px;
+}
+
+.feature-card {
+  background: white;
+  width: 280px;
+  padding: 30px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.feature-card h2 {
+  font-size: 20px;
+  color: #111827;
+  margin-bottom: 12px;
+}
+
+.feature-card p {
+  color: #6b7280;
+  line-height: 1.6;
+}

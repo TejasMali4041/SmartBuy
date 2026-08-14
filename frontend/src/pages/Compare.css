@@ -1,0 +1,111 @@
+.compare-page {
+  min-height: calc(100vh - 70px);
+  background: #f8fafc;
+  padding: 50px 60px 80px;
+}
+
+.compare-header {
+  max-width: 1200px;
+  margin: 0 auto 30px;
+}
+
+.compare-header p {
+  color: #2563eb;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.compare-header h1 {
+  font-size: 32px;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.compare-header span {
+  color: #6b7280;
+}
+
+.comparison-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  overflow-x: auto;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 850px;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: 18px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: center;
+}
+
+.comparison-table th:first-child,
+.comparison-table td:first-child {
+  text-align: left;
+  font-weight: 600;
+  background: #f8fafc;
+}
+
+.comparison-table th {
+  font-size: 18px;
+  color: #111827;
+  background: #f1f5f9;
+}
+
+.comparison-table td {
+  color: #374151;
+}
+
+.comparison-table .price {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.available {
+  font-weight: 600;
+}
+
+.not-available {
+  color: #dc2626 !important;
+}
+
+.deal-button {
+  padding: 9px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+}
+
+.deal-button:hover {
+  background: #1d4ed8;
+}
+
+.comparison-actions {
+  max-width: 1200px;
+  margin: 30px auto 0;
+  text-align: right;
+}
+
+.smart-button {
+  display: inline-block;
+  padding: 13px 22px;
+  border-radius: 7px;
+  background: #111827;
+  color: white;
+  text-decoration: none;
+}
+
+.smart-button:hover {
+  background: #374151;
+}
