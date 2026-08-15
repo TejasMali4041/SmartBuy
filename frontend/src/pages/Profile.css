@@ -1,0 +1,175 @@
+.profile-page {
+  min-height: calc(100vh - 70px);
+  background: #f8fafc;
+  padding: 50px 60px 80px;
+}
+
+.profile-header {
+  max-width: 1000px;
+  margin: 0 auto 30px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.profile-avatar {
+  width: 65px;
+  height: 65px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 25px;
+  font-weight: 700;
+}
+
+.profile-header h1 {
+  color: #111827;
+  margin-bottom: 5px;
+}
+
+.profile-header p {
+  color: #6b7280;
+}
+
+.profile-section {
+  max-width: 1000px;
+  margin: 0 auto 25px;
+  padding: 30px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+.section-header h2 {
+  color: #111827;
+  margin-bottom: 5px;
+}
+
+.section-header p {
+  color: #6b7280;
+}
+
+.edit-button,
+.preference-button {
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.edit-button {
+  border: 1px solid #2563eb;
+  background: white;
+  color: #2563eb;
+}
+
+.preference-button {
+  background: #2563eb;
+  color: white;
+}
+
+.profile-info {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.info-item {
+  padding: 18px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.info-item span,
+.preference-card span {
+  display: block;
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 7px;
+}
+
+.info-item strong,
+.preference-card strong {
+  color: #111827;
+}
+
+.preference-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 15px;
+}
+
+.preference-card {
+  padding: 18px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.activity-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.activity-card {
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.activity-card h3 {
+  margin-bottom: 8px;
+  color: #111827;
+}
+
+.activity-card p {
+  color: #6b7280;
+  line-height: 1.5;
+  margin-bottom: 15px;
+}
+
+.activity-card button {
+  border: none;
+  background: none;
+  color: #2563eb;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+@media (max-width: 800px) {
+  .profile-page {
+    padding: 30px 20px;
+  }
+
+  .preference-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .activity-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-info,
+  .preference-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-header {
+    align-items: flex-start;
+    gap: 15px;
+    flex-direction: column;
+  }
+}
