@@ -1,45 +1,126 @@
 .navbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 60px;
-  background-color: #ffffff;
+  height: 72px;
+  padding: 0 7%;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid #e5e7eb;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
-.logo {
-  font-size: 24px;
-  font-weight: 700;
+.navbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  color: #111827;
   text-decoration: none;
+
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.6px;
+}
+
+.logo-symbol {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: #111827;
+  color: white;
+
+  font-size: 16px;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 32px;
+  margin-left: 80px;
+}
+
+.navbar-links a {
+  color: #6b7280;
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  transition: color 0.2s;
+}
+
+.navbar-links a:hover {
   color: #111827;
 }
 
-.nav-links {
+.navbar-actions {
   display: flex;
-  gap: 30px;
   align-items: center;
+  gap: 12px;
 }
 
-.nav-links a {
-  text-decoration: none;
+.nav-login {
   color: #374151;
-  font-size: 15px;
+  text-decoration: none;
+  padding: 10px 15px;
+
+  font-size: 14px;
+  font-weight: 600;
 }
 
-.nav-links a:hover {
-  color: #2563eb;
+.nav-register {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  background: #111827;
+  color: white;
+
+  padding: 11px 17px;
+  border-radius: 8px;
+
+  text-decoration: none;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  transition: 0.2s;
 }
 
-.login-btn {
-  padding: 9px 18px;
-  border: 1px solid #2563eb;
-  border-radius: 6px;
-  color: #2563eb !important;
+.nav-register:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
 }
 
-.register-btn {
-  padding: 9px 18px;
-  border-radius: 6px;
-  background-color: #2563eb;
-  color: white !important;
+.nav-register span {
+  font-size: 17px;
+}
+
+@media (max-width: 700px) {
+
+  .navbar {
+    padding: 0 20px;
+  }
+
+  .navbar-links {
+    display: none;
+  }
+
+  .nav-login {
+    display: none;
+  }
+
+  .nav-register {
+    padding: 10px 14px;
+  }
 }

@@ -5,17 +5,24 @@ function Navbar() {
   return (
     <nav className="navbar">
 
-      <Link to="/" className="logo">
-        SmartBuy
+      <Link to="/" className="navbar-logo">
+        <span className="logo-symbol">S</span>
+        <span>SmartBuy</span>
       </Link>
 
-      <div className="nav-links">
-        <Link to="/login" className="login-btn">
+      <div className="navbar-links">
+        <Link to="/">Home</Link>
+        <Link to="/search">Explore</Link>
+      </div>
+
+      <div className="navbar-actions">
+        <Link to="/login" className="nav-login">
           Login
         </Link>
 
-        <Link to="/register" className="register-btn">
-          Register
+        <Link to="/register" className="nav-register">
+          Get Started
+          <span>→</span>
         </Link>
       </div>
 

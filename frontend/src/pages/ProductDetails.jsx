@@ -4,116 +4,85 @@ import "./ProductDetails.css";
 function ProductDetails() {
   const { id } = useParams();
 
-  // Temporary mock data
-  const product = {
-    id: id,
-    name: "HP Victus 16 Gaming Laptop",
-    brand: "HP",
-    image: "https://placehold.co/400x320",
-    description:
-      "HP Victus gaming laptop with powerful performance for gaming, development and everyday use.",
-
-    specifications: {
-      Processor: "AMD Ryzen 7",
-      GPU: "NVIDIA RTX 4060",
-      RAM: "16 GB",
-      Storage: "512 GB SSD",
-      Display: "16.1 inch",
-    },
-
-    providers: [
-      {
-        name: "Amazon",
-        price: 87499,
-        rating: 4.5,
-        reviews: 12500,
-        seller: "ABC Electronics",
-        sellerRating: 4.7,
-        cod: true,
-        delivery: "Free Delivery",
-        warranty: "1 Year",
-      },
-      {
-        name: "Flipkart",
-        price: 86999,
-        rating: 4.4,
-        reviews: 18000,
-        seller: "XYZ Retail",
-        sellerRating: 4.6,
-        cod: true,
-        delivery: "Free Delivery",
-        warranty: "1 Year",
-      },
-    ],
-  };
-
-  // Find the lowest current price
-  const bestOffer = [...product.providers].sort(
-    (a, b) => a.price - b.price
-  )[0];
-
   return (
-    <div className="product-details">
+    <main className="product-page">
+
+      <div className="product-breadcrumb">
+        <Link to="/">Home</Link>
+        <span>/</span>
+        <Link to="/search">Search</Link>
+        <span>/</span>
+        <span>Product</span>
+      </div>
 
       {/* Product Overview */}
-      <section className="product-main">
+      <section className="product-overview">
 
-        <div className="product-image-large">
-          <img
-            src={product.image}
-            alt={product.name}
-          />
+        <div className="product-image-area">
+          <div className="product-image">
+            <span>Product Image</span>
+          </div>
+
+          <div className="image-dots">
+            <span className="active"></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
         </div>
 
-        <div className="product-summary">
+        <div className="product-information">
+
+          <div className="product-tag">
+            BEST MATCH
+          </div>
+
+          <h1>Product Name Will Appear Here</h1>
 
           <p className="product-brand">
-            {product.brand}
+            Brand • Product Category
           </p>
 
-          <h1>{product.name}</h1>
+          <div className="product-rating-row">
 
-          <div className="product-rating">
-            ⭐ {product.providers[0].rating}
-            <span>
-              {" "}
-              ({product.providers[0].reviews.toLocaleString()} reviews)
-            </span>
+            <div className="rating">
+              ⭐ <strong>4.5</strong>
+            </div>
+
+            <span>12,500 reviews</span>
+
+            <span className="rating-divider">•</span>
+
+            <span>Verified product</span>
+
           </div>
 
           <p className="product-description">
-            {product.description}
+            Product description and specifications will be
+            provided by the SmartBuy backend.
           </p>
 
-          {/* Best Price */}
-          <div className="best-price-box">
-            <p>Best Current Price</p>
+          <div className="quick-specs">
 
-            <h2>
-              ₹{bestOffer.price.toLocaleString()}
-            </h2>
+            <div>
+              <span>Processor</span>
+              <strong>—</strong>
+            </div>
 
-            <span>
-              Available on {bestOffer.name}
-            </span>
-          </div>
+            <div>
+              <span>RAM</span>
+              <strong>—</strong>
+            </div>
 
-          {/* Actions */}
-          <div className="product-actions">
+            <div>
+              <span>Storage</span>
+              <strong>—</strong>
+            </div>
 
-            <Link
-              to={`/compare/${product.id}`}
-              className="compare-button"
-            >
-              Compare All Offers
-            </Link>
-
-            <Link
-              to={`/recommendation/${product.id}`}
-              className="recommend-button"
-            >
-              Get Smart Recommendation
-            </Link>
+            <div>
+              <span>Display</span>
+              <strong>—</strong>
+            </div>
 
           </div>
 
@@ -121,30 +90,234 @@ function ProductDetails() {
 
       </section>
 
-      {/* Specifications */}
-      <section className="specifications">
+      {/* Price Summary */}
+      <section className="price-summary">
 
-        <h2>Specifications</h2>
+        <div className="price-heading">
 
-        <div className="spec-grid">
+          <div>
+            <p className="section-eyebrow">
+              BEST CURRENT PRICE
+            </p>
 
-          {Object.entries(product.specifications).map(
-            ([key, value]) => (
-              <div
-                className="spec-item"
-                key={key}
-              >
-                <strong>{key}</strong>
-                <span>{value}</span>
+            <h2>Compare before you buy</h2>
+          </div>
+
+          <div className="lowest-price">
+
+            <small>Lowest price</small>
+
+            <strong>₹--</strong>
+
+            <span>Across available stores</span>
+
+          </div>
+
+        </div>
+
+        {/* Offers */}
+        <div className="offer-list">
+
+          <div className="offer-row recommended">
+
+            <div className="offer-provider">
+              <div className="provider-logo">A</div>
+
+              <div>
+                <strong>Amazon</strong>
+                <span>Trusted seller</span>
               </div>
-            )
-          )}
+            </div>
+
+            <div className="offer-rating">
+              ⭐ 4.5
+            </div>
+
+            <div className="offer-price">
+              <small>Price</small>
+              <strong>₹--</strong>
+            </div>
+
+            <div className="offer-delivery">
+              <span>✓</span>
+              Free delivery
+            </div>
+
+            <button className="deal-link">
+              View Deal →
+            </button>
+
+          </div>
+
+          <div className="offer-row">
+
+            <div className="offer-provider">
+              <div className="provider-logo">F</div>
+
+              <div>
+                <strong>Flipkart</strong>
+                <span>Trusted seller</span>
+              </div>
+            </div>
+
+            <div className="offer-rating">
+              ⭐ 4.4
+            </div>
+
+            <div className="offer-price">
+              <small>Price</small>
+              <strong>₹--</strong>
+            </div>
+
+            <div className="offer-delivery">
+              <span>✓</span>
+              Free delivery
+            </div>
+
+            <button className="deal-link">
+              View Deal →
+            </button>
+
+          </div>
+
+          <div className="offer-row">
+
+            <div className="offer-provider">
+              <div className="provider-logo">M</div>
+
+              <div>
+                <strong>Meesho</strong>
+                <span>Available offer</span>
+              </div>
+            </div>
+
+            <div className="offer-rating">
+              ⭐ 4.2
+            </div>
+
+            <div className="offer-price">
+              <small>Price</small>
+              <strong>₹--</strong>
+            </div>
+
+            <div className="offer-delivery">
+              <span>✓</span>
+              Delivery available
+            </div>
+
+            <button className="deal-link">
+              View Deal →
+            </button>
+
+          </div>
+
+        </div>
+
+        <div className="comparison-actions">
+
+          <Link
+            to={`/compare/${id}`}
+            className="compare-main-button"
+          >
+            Compare All Offers
+            <span>→</span>
+          </Link>
+
+          <Link
+            to={`/recommendation/${id}`}
+            className="recommend-main-button"
+          >
+            ✦ Get Smart Recommendation
+          </Link>
 
         </div>
 
       </section>
 
-    </div>
+      {/* Lower Information */}
+      <section className="product-lower">
+
+        <div className="specification-panel">
+
+          <div className="panel-header">
+            <div>
+              <p className="section-eyebrow">PRODUCT DETAILS</p>
+              <h2>Specifications</h2>
+            </div>
+          </div>
+
+          <div className="spec-grid">
+
+            <div className="spec-item">
+              <span>Brand</span>
+              <strong>—</strong>
+            </div>
+
+            <div className="spec-item">
+              <span>Model</span>
+              <strong>—</strong>
+            </div>
+
+            <div className="spec-item">
+              <span>Processor</span>
+              <strong>—</strong>
+            </div>
+
+            <div className="spec-item">
+              <span>Graphics</span>
+              <strong>—</strong>
+            </div>
+
+            <div className="spec-item">
+              <span>Memory</span>
+              <strong>—</strong>
+            </div>
+
+            <div className="spec-item">
+              <span>Storage</span>
+              <strong>—</strong>
+            </div>
+
+          </div>
+
+        </div>
+
+        <div className="analysis-panel">
+
+          <p className="section-eyebrow">SMARTBUY ANALYSIS</p>
+
+          <h2>Understand before you buy.</h2>
+
+          <p>
+            Explore price trends and customer feedback to make
+            a more informed decision.
+          </p>
+
+          <div className="analysis-links">
+
+            <Link to={`/price-history/${id}`}>
+              <span>◷</span>
+              <div>
+                <strong>Price History</strong>
+                <small>Check historical prices →</small>
+              </div>
+            </Link>
+
+            <Link to={`/reviews/${id}`}>
+              <span>◉</span>
+              <div>
+                <strong>Review Analysis</strong>
+                <small>Understand customer feedback →</small>
+              </div>
+            </Link>
+
+          </div>
+
+        </div>
+
+      </section>
+
+    </main>
   );
 }
 

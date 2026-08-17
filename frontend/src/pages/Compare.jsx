@@ -1,216 +1,349 @@
-import { useParams, Link } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import "./Compare.css";
 
 function Compare() {
   const { id } = useParams();
 
-  const product = {
-    id,
-    name: "HP Victus 16 Gaming Laptop",
-
-    offers: [
-      {
-        provider: "Amazon",
-        price: 87499,
-        mrp: 99999,
-        discount: 12,
-        rating: 4.5,
-        reviews: 12500,
-        seller: "ABC Electronics",
-        sellerRating: 4.7,
-        cod: true,
-        delivery: "Free Delivery",
-        warranty: "1 Year",
-      },
-      {
-        provider: "Flipkart",
-        price: 86999,
-        mrp: 99999,
-        discount: 13,
-        rating: 4.4,
-        reviews: 18000,
-        seller: "XYZ Retail",
-        sellerRating: 4.6,
-        cod: true,
-        delivery: "Free Delivery",
-        warranty: "1 Year",
-      },
-      {
-        provider: "Meesho",
-        price: 89500,
-        mrp: 98000,
-        discount: 9,
-        rating: 4.2,
-        reviews: 2100,
-        seller: "Tech Store",
-        sellerRating: 4.3,
-        cod: false,
-        delivery: "₹99 Delivery",
-        warranty: "1 Year",
-      },
-    ],
-  };
-
   return (
-    <div className="compare-page">
+    <main className="compare-page">
 
-      <div className="compare-header">
-        <p>Product Comparison</p>
-        <h1>{product.name}</h1>
-        <span>Compare all available offers</span>
+      <div className="compare-breadcrumb">
+        <Link to={`/product/${id}`}>← Back to Product</Link>
       </div>
 
-      <div className="comparison-container">
+      {/* Header */}
+      <section className="compare-header">
 
-        <table className="comparison-table">
+        <div>
+          <p className="section-eyebrow">SMARTBUY COMPARISON</p>
 
-          <thead>
-            <tr>
-              <th>Feature</th>
+          <h1>Compare all offers</h1>
 
-              {product.offers.map((offer) => (
-                <th key={offer.provider}>
-                  {offer.provider}
-                </th>
-              ))}
-            </tr>
-          </thead>
+          <p>
+            Find the best combination of price, seller,
+            delivery and overall value.
+          </p>
+        </div>
 
-          <tbody>
+        <div className="compare-product">
+          <div className="mini-product-image">
+            Product
+          </div>
 
-            <tr>
-              <td>Price</td>
+          <div>
+            <strong>Product Name</strong>
+            <span>Multiple offers available</span>
+          </div>
+        </div>
 
-              {product.offers.map((offer) => (
-                <td key={offer.provider} className="price">
-                  ₹{offer.price.toLocaleString()}
-                </td>
-              ))}
-            </tr>
+      </section>
 
-            <tr>
-              <td>MRP</td>
+      {/* Summary */}
+      <section className="comparison-summary">
 
-              {product.offers.map((offer) => (
-                <td key={offer.provider}>
-                  ₹{offer.mrp.toLocaleString()}
-                </td>
-              ))}
-            </tr>
+        <div className="summary-card best">
 
-            <tr>
-              <td>Discount</td>
+          <span className="summary-icon">🏆</span>
 
-              {product.offers.map((offer) => (
-                <td key={offer.provider}>
-                  {offer.discount}%
-                </td>
-              ))}
-            </tr>
+          <div>
+            <small>Best Overall</small>
+            <strong>—</strong>
+            <p>SmartBuy Score</p>
+          </div>
 
-            <tr>
-              <td>Rating</td>
+        </div>
 
-              {product.offers.map((offer) => (
-                <td key={offer.provider}>
-                  ⭐ {offer.rating}
-                </td>
-              ))}
-            </tr>
+        <div className="summary-card">
 
-            <tr>
-              <td>Reviews</td>
+          <span className="summary-icon">₹</span>
 
-              {product.offers.map((offer) => (
-                <td key={offer.provider}>
-                  {offer.reviews.toLocaleString()}
-                </td>
-              ))}
-            </tr>
+          <div>
+            <small>Lowest Price</small>
+            <strong>₹--</strong>
+            <p>Best available deal</p>
+          </div>
 
-            <tr>
-              <td>Seller</td>
+        </div>
 
-              {product.offers.map((offer) => (
-                <td key={offer.provider}>
-                  {offer.seller}
-                </td>
-              ))}
-            </tr>
+        <div className="summary-card">
 
-            <tr>
-              <td>Seller Rating</td>
+          <span className="summary-icon">⭐</span>
 
-              {product.offers.map((offer) => (
-                <td key={offer.provider}>
-                  ⭐ {offer.sellerRating}
-                </td>
-              ))}
-            </tr>
+          <div>
+            <small>Highest Rated</small>
+            <strong>—</strong>
+            <p>Based on ratings</p>
+          </div>
 
-            <tr>
-              <td>Cash on Delivery</td>
+        </div>
 
-              {product.offers.map((offer) => (
-                <td
-                  key={offer.provider}
-                  className={offer.cod ? "available" : "not-available"}
-                >
-                  {offer.cod ? "✓ Available" : "✗ Not Available"}
-                </td>
-              ))}
-            </tr>
+        <div className="summary-card">
 
-            <tr>
-              <td>Delivery</td>
+          <span className="summary-icon">🚚</span>
 
-              {product.offers.map((offer) => (
-                <td key={offer.provider}>
-                  {offer.delivery}
-                </td>
-              ))}
-            </tr>
+          <div>
+            <small>Best Delivery</small>
+            <strong>—</strong>
+            <p>Fastest available</p>
+          </div>
 
-            <tr>
-              <td>Warranty</td>
+        </div>
 
-              {product.offers.map((offer) => (
-                <td key={offer.provider}>
-                  {offer.warranty}
-                </td>
-              ))}
-            </tr>
+      </section>
 
-            <tr>
-              <td>Deal</td>
+      {/* Comparison Table */}
+      <section className="offers-section">
 
-              {product.offers.map((offer) => (
-                <td key={offer.provider}>
-                  <button className="deal-button">
-                    View Deal
-                  </button>
-                </td>
-              ))}
-            </tr>
+        <div className="offers-title">
 
-          </tbody>
+          <div>
+            <h2>Available offers</h2>
+            <p>
+              Compare the details before choosing where to buy.
+            </p>
+          </div>
 
-        </table>
+          <select defaultValue="overall">
+            <option value="overall">Best Overall</option>
+            <option value="price">Lowest Price</option>
+            <option value="rating">Highest Rating</option>
+            <option value="delivery">Fastest Delivery</option>
+          </select>
 
-      </div>
+        </div>
 
-      <div className="comparison-actions">
+        <div className="offers-table">
+
+          {/* Table Header */}
+          <div className="table-header">
+            <span>Store</span>
+            <span>Price</span>
+            <span>Rating</span>
+            <span>Delivery</span>
+            <span>Seller</span>
+            <span></span>
+          </div>
+
+          {/* Amazon */}
+          <div className="offer-card recommended">
+
+            <div className="store-info">
+
+              <div className="store-logo amazon-logo">
+                A
+              </div>
+
+              <div>
+                <strong>Amazon</strong>
+                <span>Recommended</span>
+              </div>
+
+            </div>
+
+            <div className="table-price">
+              <strong>₹--</strong>
+              <span>Lowest price</span>
+            </div>
+
+            <div className="table-rating">
+              ⭐ <strong>4.5</strong>
+              <span>12.5K reviews</span>
+            </div>
+
+            <div className="table-delivery">
+              <strong>—</strong>
+              <span>Delivery</span>
+            </div>
+
+            <div className="table-seller">
+              <strong>—</strong>
+              <span>Seller rating</span>
+            </div>
+
+            <button className="deal-button">
+              View Deal →
+            </button>
+
+          </div>
+
+          {/* Flipkart */}
+          <div className="offer-card">
+
+            <div className="store-info">
+
+              <div className="store-logo flipkart-logo">
+                F
+              </div>
+
+              <div>
+                <strong>Flipkart</strong>
+                <span>Available</span>
+              </div>
+
+            </div>
+
+            <div className="table-price">
+              <strong>₹--</strong>
+              <span>Price</span>
+            </div>
+
+            <div className="table-rating">
+              ⭐ <strong>4.4</strong>
+              <span>9.8K reviews</span>
+            </div>
+
+            <div className="table-delivery">
+              <strong>—</strong>
+              <span>Delivery</span>
+            </div>
+
+            <div className="table-seller">
+              <strong>—</strong>
+              <span>Seller rating</span>
+            </div>
+
+            <button className="deal-button">
+              View Deal →
+            </button>
+
+          </div>
+
+          {/* Meesho */}
+          <div className="offer-card">
+
+            <div className="store-info">
+
+              <div className="store-logo meesho-logo">
+                M
+              </div>
+
+              <div>
+                <strong>Meesho</strong>
+                <span>Available</span>
+              </div>
+
+            </div>
+
+            <div className="table-price">
+              <strong>₹--</strong>
+              <span>Price</span>
+            </div>
+
+            <div className="table-rating">
+              ⭐ <strong>4.2</strong>
+              <span>5.4K reviews</span>
+            </div>
+
+            <div className="table-delivery">
+              <strong>—</strong>
+              <span>Delivery</span>
+            </div>
+
+            <div className="table-seller">
+              <strong>—</strong>
+              <span>Seller rating</span>
+            </div>
+
+            <button className="deal-button">
+              View Deal →
+            </button>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* SmartBuy Analysis */}
+      <section className="compare-analysis">
+
+        <div className="analysis-copy">
+
+          <p className="section-eyebrow">
+            SMARTBUY ANALYSIS
+          </p>
+
+          <h2>
+            The cheapest offer isn't
+            <span> always the best.</span>
+          </h2>
+
+          <p>
+            SmartBuy evaluates multiple factors so you can
+            understand the difference between price and
+            actual value.
+          </p>
+
+        </div>
+
+        <div className="score-breakdown">
+
+          <div className="score-row">
+            <span>Price</span>
+            <div className="score-bar">
+              <div style={{ width: "88%" }}></div>
+            </div>
+            <strong>88</strong>
+          </div>
+
+          <div className="score-row">
+            <span>Rating</span>
+            <div className="score-bar">
+              <div style={{ width: "92%" }}></div>
+            </div>
+            <strong>92</strong>
+          </div>
+
+          <div className="score-row">
+            <span>Reviews</span>
+            <div className="score-bar">
+              <div style={{ width: "84%" }}></div>
+            </div>
+            <strong>84</strong>
+          </div>
+
+          <div className="score-row">
+            <span>Seller</span>
+            <div className="score-bar">
+              <div style={{ width: "90%" }}></div>
+            </div>
+            <strong>90</strong>
+          </div>
+
+          <div className="score-row">
+            <span>Delivery</span>
+            <div className="score-bar">
+              <div style={{ width: "78%" }}></div>
+            </div>
+            <strong>78</strong>
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* CTA */}
+      <section className="compare-cta">
+
+        <div>
+          <h2>Want SmartBuy to choose for you?</h2>
+
+          <p>
+            Get a personalized recommendation based on
+            multiple purchase factors.
+          </p>
+        </div>
 
         <Link
-          to={`/recommendation/${product.id}`}
-          className="smart-button"
+          to={`/recommendation/${id}`}
+          className="recommend-button"
         >
-          Get Smart Recommendation
+          ✦ Get Smart Recommendation
         </Link>
 
-      </div>
+      </section>
 
-    </div>
+    </main>
   );
 }
 
