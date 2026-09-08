@@ -13,6 +13,7 @@ function Register() {
   });
 
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({
@@ -23,16 +24,18 @@ function Register() {
     setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     const { name, email, password, confirmPassword } = formData;
 
+    // Full name validation
     if (!name.trim()) {
       setError("Please enter your full name.");
       return;
     }
 
+    // Email validation
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (!emailPattern.test(email)) {
@@ -40,6 +43,7 @@ function Register() {
       return;
     }
 
+    // Password validation
     const passwordPattern =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 
@@ -50,21 +54,57 @@ function Register() {
       return;
     }
 
+    // Confirm password validation
     if (password !== confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
 
-    // Temporary frontend registration
-    alert("Registration successful!");
+    // Send registration data to Flask backend
+    try {
+      setLoading(true);
+      setError("");
 
-    navigate("/login");
+      const response = await fetch(
+        "http://127.0.0.1:5000/api/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: name.trim(),
+            email: email.trim(),
+            password: password,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Registration failed.");
+        setLoading(false);
+        return;
+      }
+
+      alert("Registration successful!");
+
+      navigate("/login");
+
+    } catch (error) {
+      console.error(error);
+      setError(
+        "Unable to connect to the server. Please make sure the backend is running."
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="auth-page">
       <div className="auth-card">
-
         <h1>Create Account</h1>
 
         <p className="auth-subtitle">
@@ -72,7 +112,7 @@ function Register() {
         </p>
 
         <form onSubmit={handleSubmit}>
-
+          {/* Full Name */}
           <div className="form-group">
             <label>Full Name</label>
 
@@ -82,9 +122,11 @@ function Register() {
               placeholder="Enter your name"
               value={formData.name}
               onChange={handleChange}
+              disabled={loading}
             />
           </div>
 
+          {/* Email */}
           <div className="form-group">
             <label>Email</label>
 
@@ -94,9 +136,11 @@ function Register() {
               placeholder="Enter your email"
               value={formData.email}
               onChange={handleChange}
+              disabled={loading}
             />
           </div>
 
+          {/* Password */}
           <div className="form-group">
             <label>Password</label>
 
@@ -106,9 +150,11 @@ function Register() {
               placeholder="Create a password"
               value={formData.password}
               onChange={handleChange}
+              disabled={loading}
             />
           </div>
 
+          {/* Confirm Password */}
           <div className="form-group">
             <label>Confirm Password</label>
 
@@ -118,26 +164,31 @@ function Register() {
               placeholder="Confirm your password"
               value={formData.confirmPassword}
               onChange={handleChange}
+              disabled={loading}
             />
           </div>
 
+          {/* Error */}
           {error && (
             <p className="error-message">
               {error}
             </p>
           )}
 
-          <button type="submit" className="auth-button">
-            Create Account
+          {/* Submit */}
+          <button
+            type="submit"
+            className="auth-button"
+            disabled={loading}
+          >
+            {loading ? "Creating Account..." : "Create Account"}
           </button>
-
         </form>
 
         <p className="auth-footer">
           Already have an account?{" "}
           <Link to="/login">Login</Link>
         </p>
-
       </div>
     </div>
   );

@@ -1,7 +1,24 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import "./Home.css";
 
 function Home() {
+  const navigate = useNavigate();
+
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    const query = searchQuery.trim();
+
+    if (!query) {
+      return;
+    }
+
+    navigate(`/search?q=${encodeURIComponent(query)}`);
+  };
+
   return (
     <main className="home">
 
@@ -25,24 +42,45 @@ function Home() {
             multiple e-commerce platforms — all in one place.
           </p>
 
-          <div className="hero-search">
+          {/* Search */}
+          <form
+            className="hero-search"
+            onSubmit={handleSearch}
+          >
             <span className="search-icon">⌕</span>
 
             <input
               type="text"
               placeholder="Search for products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
 
-            <button>Search</button>
-          </div>
+            <button type="submit">
+              Search
+            </button>
+          </form>
 
           <div className="popular-searches">
+
             <span>Popular:</span>
 
-            <Link to="/search?q=iphone">iPhone</Link>
-            <Link to="/search?q=laptop">Laptops</Link>
-            <Link to="/search?q=headphones">Headphones</Link>
-            <Link to="/search?q=smartwatch">Smartwatches</Link>
+            <Link to="/search?q=iphone">
+              iPhone
+            </Link>
+
+            <Link to="/search?q=laptop">
+              Laptops
+            </Link>
+
+            <Link to="/search?q=headphones">
+              Headphones
+            </Link>
+
+            <Link to="/search?q=smartwatch">
+              Smartwatches
+            </Link>
+
           </div>
 
         </div>
@@ -82,7 +120,9 @@ function Home() {
               <strong>94 / 100</strong>
             </div>
 
-            <span className="ai-label">Best choice</span>
+            <span className="ai-label">
+              Best choice
+            </span>
 
           </div>
 
@@ -131,19 +171,25 @@ function Home() {
       <section className="features-section">
 
         <div className="section-heading">
+
           <div>
-            <p className="section-eyebrow">WHY SMARTBUY</p>
+
+            <p className="section-eyebrow">
+              WHY SMARTBUY
+            </p>
 
             <h2>
               More than just
               <span> price comparison.</span>
             </h2>
+
           </div>
 
           <p>
             SmartBuy brings the information you need to make
             a confident purchase decision.
           </p>
+
         </div>
 
         <div className="feature-grid">
@@ -220,16 +266,23 @@ function Home() {
       <section className="cta-section">
 
         <div>
-          <p className="section-eyebrow">READY TO SHOP?</p>
+
+          <p className="section-eyebrow">
+            READY TO SHOP?
+          </p>
 
           <h2>
             Find your next
             <br />
             <span>best deal.</span>
           </h2>
+
         </div>
 
-        <Link to="/search" className="cta-button">
+        <Link
+          to="/search"
+          className="cta-button"
+        >
           Start searching →
         </Link>
 

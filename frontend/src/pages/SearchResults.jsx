@@ -1,9 +1,26 @@
+import { useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import "./SearchResults.css";
 
 function SearchResults() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const query = searchParams.get("q") || "";
+
+  const [searchInput, setSearchInput] = useState(query);
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+
+    const trimmedQuery = searchInput.trim();
+
+    if (!trimmedQuery) {
+      setSearchParams({});
+      return;
+    }
+
+    setSearchParams({ q: trimmedQuery });
+  };
 
   return (
     <main className="search-page">
@@ -24,17 +41,24 @@ function SearchResults() {
           </p>
         </div>
 
-        <div className="search-box-large">
+        {/* Search Box */}
+        <form
+          className="search-box-large"
+          onSubmit={handleSearch}
+        >
           <span>⌕</span>
 
           <input
             type="text"
-            defaultValue={query}
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Search for a product..."
           />
 
-          <button>Search</button>
-        </div>
+          <button type="submit">
+            Search
+          </button>
+        </form>
 
       </section>
 
@@ -45,10 +69,14 @@ function SearchResults() {
 
           <div className="filter-header">
             <h3>Filters</h3>
-            <button>Reset</button>
+
+            <button type="button">
+              Reset
+            </button>
           </div>
 
           <div className="filter-group">
+
             <h4>Price Range</h4>
 
             <label>
@@ -70,9 +98,11 @@ function SearchResults() {
               <input type="checkbox" />
               Above ₹1,00,000
             </label>
+
           </div>
 
           <div className="filter-group">
+
             <h4>Rating</h4>
 
             <label>
@@ -89,9 +119,11 @@ function SearchResults() {
               <input type="checkbox" />
               ⭐ 3.5 & above
             </label>
+
           </div>
 
           <div className="filter-group">
+
             <h4>Provider</h4>
 
             <label>
@@ -113,97 +145,211 @@ function SearchResults() {
               <input type="checkbox" />
               Myntra
             </label>
+
           </div>
 
         </aside>
 
-        {/* Results */}
+        {/* Results Area */}
         <section className="results-area">
 
-          <div className="results-toolbar">
+          {/* Toolbar only after search */}
+          {query && (
+            <div className="results-toolbar">
 
-            <span>
-              Products matching your search
-            </span>
+              <span>
+                Products matching your search
+              </span>
 
-            <select defaultValue="relevance">
-              <option value="relevance">Sort: Relevance</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="rating">Highest Rated</option>
-            </select>
+              <select defaultValue="relevance">
+                <option value="relevance">
+                  Sort: Relevance
+                </option>
 
-          </div>
+                <option value="price-low">
+                  Price: Low to High
+                </option>
 
-          {/* Temporary product UI */}
-          <div className="product-result-card">
+                <option value="price-high">
+                  Price: High to Low
+                </option>
 
-            <div className="product-image-placeholder">
-              Product Image
+                <option value="rating">
+                  Highest Rated
+                </option>
+              </select>
+
             </div>
+          )}
 
-            <div className="product-main">
+          {/* BEFORE SEARCH */}
+          {!query && (
+            <div className="empty-results">
 
-              <div className="product-provider">
-                <span>AMAZON</span>
+              <div className="empty-icon">
+                ⌕
               </div>
 
-              <h2>Product will appear here</h2>
+              <h3>
+                Search for a product to get started
+              </h3>
 
-              <div className="product-rating">
-                ⭐ <strong>4.5</strong>
-                <span>12,500 reviews</span>
-              </div>
-
-              <p className="product-description">
-                Product information, specifications and other details
-                will be loaded from the backend.
+              <p>
+                Enter a product name above and click
+                Search to see matching products.
               </p>
 
-              <div className="product-actions">
+            </div>
+          )}
 
-                <Link
-                  to="/product/placeholder"
-                  className="details-button"
-                >
-                  View Details
-                </Link>
+          {/* AFTER SEARCH */}
+          {query && (
+            <>
+              {/* Product 1 */}
+              <div className="product-result-card">
 
-                <Link
-                  to="/compare/placeholder"
-                  className="compare-button"
-                >
-                  Compare Offers
-                </Link>
+                <div className="product-image-placeholder">
+                  Product 1
+                </div>
+
+                <div className="product-main">
+
+                  <div className="product-provider">
+                    <span>
+                      PRODUCT 1
+                    </span>
+                  </div>
+
+                  <h2>
+                    Product will appear here
+                  </h2>
+
+                  <div className="product-rating">
+                    ⭐ <strong>--</strong>
+
+                    <span>
+                      Reviews will appear here
+                    </span>
+                  </div>
+
+                  <p className="product-description">
+                    Product information, specifications
+                    and other details will be loaded
+                    from the backend.
+                  </p>
+
+                  <div className="product-actions">
+
+                    <Link
+                      to="/product/1"
+                      className="details-button"
+                    >
+                      View Details
+                    </Link>
+
+                    <Link
+                      to="/compare/1"
+                      className="compare-button"
+                    >
+                      Compare Offers
+                    </Link>
+
+                  </div>
+
+                </div>
+
+                <div className="product-price">
+
+                  <small>
+                    Starting from
+                  </small>
+
+                  <strong>
+                    ₹--
+                  </strong>
+
+                  <span>
+                    Best price
+                  </span>
+
+                </div>
 
               </div>
 
-            </div>
+              {/* Product 2 */}
+              <div className="product-result-card">
 
-            <div className="product-price">
+                <div className="product-image-placeholder">
+                  Product 2
+                </div>
 
-              <small>Starting from</small>
+                <div className="product-main">
 
-              <strong>₹--</strong>
+                  <div className="product-provider">
+                    <span>
+                      PRODUCT 2
+                    </span>
+                  </div>
 
-              <span>Best price</span>
+                  <h2>
+                    Product will appear here
+                  </h2>
 
-            </div>
+                  <div className="product-rating">
+                    ⭐ <strong>--</strong>
 
-          </div>
+                    <span>
+                      Reviews will appear here
+                    </span>
+                  </div>
 
-          <div className="empty-results">
+                  <p className="product-description">
+                    Product information, specifications
+                    and other details will be loaded
+                    from the backend.
+                  </p>
 
-            <div className="empty-icon">⌕</div>
+                  <div className="product-actions">
 
-            <h3>Real products will appear here</h3>
+                    <Link
+                      to="/product/2"
+                      className="details-button"
+                    >
+                      View Details
+                    </Link>
 
-            <p>
-              Once the SmartBuy backend is connected,
-              your search results will be loaded dynamically.
-            </p>
+                    <Link
+                      to="/compare/2"
+                      className="compare-button"
+                    >
+                      Compare Offers
+                    </Link>
 
-          </div>
+                  </div>
+
+                </div>
+
+                <div className="product-price">
+
+                  <small>
+                    Starting from
+                  </small>
+
+                  <strong>
+                    ₹--
+                  </strong>
+
+                  <span>
+                    Best price
+                  </span>
+
+                </div>
+
+              </div>
+
+             
+            </>
+          )}
 
         </section>
 
