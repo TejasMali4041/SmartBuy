@@ -1,0 +1,8 @@
+Flask
+Flask-Cors
+Flask-SQLAlchemy
+Flask-JWT-Extended
+PyMySQL
+Werkzeug
+requests
+beautifulsoup4

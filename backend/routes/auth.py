@@ -1,63 +1,77 @@
 from flask import Blueprint, request
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from extensions import db
 from models.user import User
 
 auth = Blueprint("auth", __name__)
 
-
-@auth.route("/api/register", methods=["POST"])
+@auth.post("/api/register")
 def register():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
-    name = data.get("name")
-    email = data.get("email")
-    password = data.get("password")
+    name = str(data.get("name", "")).strip()
+    email = str(data.get("email", "")).strip().lower()
+    password = str(data.get("password", ""))
 
     if not name or not email or not password:
         return {"message": "All fields are required"}, 400
 
-    existing_user = User.query.filter_by(email=email).first()
+    if len(password) < 6:
+        return {"message": "Password must be at least 6 characters"}, 400
 
-    if existing_user:
+    if User.query.filter_by(email=email).first():
         return {"message": "Email already registered"}, 409
 
-    hashed_password = generate_password_hash(password)
-
-    new_user = User(
+    user = User(
         name=name,
         email=email,
-        password=hashed_password
+        password=generate_password_hash(password)
     )
 
-    db.session.add(new_user)
-    db.session.commit()
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        return {"message": "Could not create user"}, 500
 
-    return {"message": "Registration successful"}, 201
+    return {
+        "message": "Registration successful",
+        "user": {"id": user.id, "name": user.name, "email": user.email}
+    }, 201
 
-@auth.route("/api/login", methods=["POST"])
+
+@auth.post("/api/login")
 def login():
-    data = request.get_json()
+    data = request.get_json(silent=True) or {}
 
-    email = data.get("email")
-    password = data.get("password")
-
-    if not email or not password:
-        return {"message": "Email and password are required"}, 400
+    email = str(data.get("email", "")).strip().lower()
+    password = str(data.get("password", ""))
 
     user = User.query.filter_by(email=email).first()
 
-    if not user:
+    if not user or not check_password_hash(user.password, password):
         return {"message": "Invalid email or password"}, 401
 
-    if not check_password_hash(user.password, password):
-        return {"message": "Invalid email or password"}, 401
+    token = create_access_token(identity=str(user.id))
 
     return {
         "message": "Login successful",
-        "user": {
-            "id": user.id,
-            "name": user.name,
-            "email": user.email
-        }
+        "access_token": token,
+        "user": {"id": user.id, "name": user.name, "email": user.email}
     }, 200
+
+
+@auth.get("/api/me")
+@jwt_required()
+def me():
+    user_id = int(get_jwt_identity())
+    user = db.session.get(User, user_id)
+
+    if not user:
+        return {"message": "User not found"}, 404
+
+    return {
+        "user": {"id": user.id, "name": user.name, "email": user.email}
+    }
