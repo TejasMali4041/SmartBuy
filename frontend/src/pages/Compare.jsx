@@ -1,6 +1,12 @@
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./Compare.css";
+
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5000";
+
+// Module-level session cache: avoids re-fetching or duplicate calls on re-mounts
+const ENRICH_CACHE = new Map();
 
 
 /* ───────────────────────── helpers ───────────────────────── */
@@ -158,7 +164,62 @@ function getUrl(offer) {
 }
 
 function getLastChecked(offer) {
-  return firstValue(offer?.last_checked, offer?.lastChecked);
+  return firstValue(offer?.last_checked, offer?.lastChecked, offer?.scraped_at);
+}
+
+function getDescription(offer) {
+  return firstValue(
+    offer?.description,
+    offer?.product_description,
+    offer?.about_product,
+    offer?.about_this_item,
+    offer?.features,
+    offer?.highlights
+  );
+}
+
+function getBrand(offer) {
+  return firstValue(
+    offer?.brand,
+    offer?.brand_name,
+    offer?.manufacturer
+  );
+}
+
+function getCategory(offer) {
+  return firstValue(
+    offer?.category,
+    offer?.product_category,
+    offer?.department
+  );
+}
+
+function getColor(offer) {
+  return firstValue(
+    offer?.color,
+    offer?.colour,
+    offer?.variant_color
+  );
+}
+
+function getSize(offer) {
+  return firstValue(
+    offer?.size,
+    offer?.storage,
+    offer?.storage_capacity,
+    offer?.variant_size
+  );
+}
+
+function getReturnWindow(offer) {
+  const v = firstValue(
+    offer?.return_window,
+    offer?.return_period,
+    offer?.return_days
+  );
+  if (v === undefined || v === null) return null;
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) ? n : v;
 }
 
 function formatPrice(v) {
@@ -309,9 +370,106 @@ function Compare() {
   const navigate = useNavigate();
 
   const comparison = location.state?.comparison;
-  const offers = useMemo(() => getOffers(comparison), [comparison]);
+  const baseOffers = useMemo(() => getOffers(comparison), [comparison]);
 
-  /* Build enriched data for each offer */
+  // Stable cache key based on offer URLs
+  const cacheKey = useMemo(() => {
+    if (!baseOffers || baseOffers.length === 0) return null;
+    return baseOffers
+      .map((o) => (o?.url || o?.product_url || o?.link || "").trim())
+      .filter(Boolean)
+      .sort()
+      .join("||");
+  }, [baseOffers]);
+
+  /* ── On-demand enrichment state (initialized from cache if available) ── */
+  const [enrichedOffers, setEnrichedOffers] = useState(() => {
+    if (cacheKey && ENRICH_CACHE.has(cacheKey)) {
+      return ENRICH_CACHE.get(cacheKey);
+    }
+    return null;
+  });
+  const [enriching, setEnriching] = useState(false);
+  const [enrichError, setEnrichError] = useState(null);
+
+  // Guards to prevent React StrictMode duplicate execution & concurrent fetches
+  const hasInitiatedRef = useRef(false);
+  const isEnrichingRef = useRef(false);
+
+  /* The offers to render: enriched if available, otherwise basic */
+  const offers = enrichedOffers || baseOffers;
+
+  /* Call the enrich API to fetch full product details */
+  const fetchEnrichedData = useCallback(
+    async (force = false) => {
+      if (!baseOffers || baseOffers.length === 0) return;
+
+      // If already cached and not forced, restore from cache without API call
+      if (!force && cacheKey && ENRICH_CACHE.has(cacheKey)) {
+        setEnrichedOffers(ENRICH_CACHE.get(cacheKey));
+        return;
+      }
+
+      // Prevent concurrent duplicate executions
+      if (isEnrichingRef.current) return;
+
+      // Only enrich if at least one offer has a URL
+      const hasUrls = baseOffers.some(
+        (o) => (o?.url || o?.product_url || o?.link || "").trim().startsWith("http")
+      );
+      if (!hasUrls) return;
+
+      isEnrichingRef.current = true;
+      setEnriching(true);
+      setEnrichError(null);
+
+      try {
+        const response = await fetch(`${API_BASE}/api/search/enrich`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ offers: baseOffers }),
+        });
+
+        if (!response.ok) {
+          throw new Error(`Enrich API returned ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success && Array.isArray(data.offers)) {
+          setEnrichedOffers(data.offers);
+          if (cacheKey) {
+            ENRICH_CACHE.set(cacheKey, data.offers);
+          }
+        } else {
+          throw new Error(data.error || "Enrichment returned no data");
+        }
+      } catch (err) {
+        console.warn("[SmartBuy] Enrichment failed, using basic data:", err);
+        setEnrichError(err.message);
+      } finally {
+        isEnrichingRef.current = false;
+        setEnriching(false);
+      }
+    },
+    [baseOffers, cacheKey]
+  );
+
+  useEffect(() => {
+    // If already in cache, load immediately
+    if (cacheKey && ENRICH_CACHE.has(cacheKey)) {
+      setEnrichedOffers(ENRICH_CACHE.get(cacheKey));
+      return;
+    }
+
+    // StrictMode double-mount guard: only fire once per mount cycle
+    if (hasInitiatedRef.current) return;
+    hasInitiatedRef.current = true;
+
+    fetchEnrichedData();
+  }, [fetchEnrichedData, cacheKey]);
+
+  /* Build enriched display data for each offer */
   const enriched = useMemo(
     () =>
       offers.map((offer, index) => {
@@ -335,6 +493,12 @@ function Compare() {
           offerText: getOfferText(offer),
           url: getUrl(offer),
           lastChecked: getLastChecked(offer),
+          description: getDescription(offer),
+          brand: getBrand(offer),
+          category: getCategory(offer),
+          color: getColor(offer),
+          size: getSize(offer),
+          returnWindow: getReturnWindow(offer),
           score: calcSmartBuyScore(offer, offers),
         };
       }),
@@ -358,23 +522,47 @@ function Compare() {
     .filter((e) => typeof e.discount === "number")
     .sort((a, b) => b.discount - a.discount)[0];
 
-  const commonName = useMemo(() => {
-    const brand = firstValue(
+  const commonBrand = useMemo(() => {
+    return firstValue(
       comparison?.brand,
       offers[0]?.brand,
-      offers[1]?.brand
+      offers[1]?.brand,
+      getBrand(offers[0]),
+      getBrand(offers[1])
     );
-    const title = getTitle(offers[0]);
-    const words = String(title || "")
-      .split(/\s+/)
-      .slice(0, 6)
-      .join(" ");
-    return brand && !words.toLowerCase().startsWith(brand.toLowerCase())
-      ? `${brand} ${words}`
-      : words || "Product";
   }, [comparison, offers]);
 
-  const commonImage = getImage(offers[0]);
+  const commonCategory = useMemo(() => {
+    return firstValue(
+      comparison?.category,
+      offers[0]?.category,
+      offers[1]?.category,
+      getCategory(offers[0]),
+      getCategory(offers[1])
+    );
+  }, [comparison, offers]);
+
+  const commonTitle = useMemo(() => {
+    const raw = firstValue(
+      comparison?.name,
+      comparison?.title,
+      comparison?.product_name,
+      getTitle(offers[0]),
+      getTitle(offers[1])
+    );
+    if (!raw) return "Product Comparison";
+    return String(raw).trim().replace(/[\s\-,|/]+$/, "");
+  }, [comparison, offers]);
+
+  const commonImage = useMemo(() => {
+    return firstValue(
+      comparison?.image,
+      comparison?.image_url,
+      comparison?.imageUrl,
+      getImage(offers[0]),
+      getImage(offers[1])
+    );
+  }, [comparison, offers]);
 
   /* ── Empty state ── */
   if (!comparison || offers.length === 0) {
@@ -436,6 +624,25 @@ function Compare() {
   return (
     <main className="compare-page" style={{ "--offer-count": enriched.length }}>
 
+      {/* Enrichment loading banner */}
+      {enriching && (
+        <div className="enrich-loading-banner">
+          <div className="enrich-spinner" />
+          <div>
+            <strong>Fetching detailed product data…</strong>
+            <p>Scraping seller info, delivery, offers, MRP and more from product pages.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Enrichment error (non-blocking) */}
+      {enrichError && !enriching && (
+        <div className="enrich-error-banner">
+          <span>⚠️ Could not load full details: {enrichError}</span>
+          <button type="button" onClick={() => fetchEnrichedData(true)}>Retry</button>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <div className="compare-breadcrumb">
         <Link to={`/product/${id}`} state={{ comparison }}>
@@ -443,27 +650,37 @@ function Compare() {
         </Link>
       </div>
 
-      {/* ─── Header ─── */}
+      {/* ─── Header: Common Image & Product Title ─── */}
       <section className="compare-header">
-        <div className="compare-header-text">
-          <p className="section-eyebrow">SMARTBUY COMPARISON</p>
-          <h1>Side-by-side comparison</h1>
-          <p className="compare-subtitle">
-            Every detail compared so you can make the smartest buying decision.
-          </p>
-        </div>
-
-        <div className="compare-product">
-          <div className="mini-product-image">
+        <div className="compare-product-hero">
+          <div className="compare-common-image-card">
             {commonImage ? (
-              <img src={commonImage} alt={commonName} />
+              <img
+                src={commonImage}
+                alt={commonTitle}
+                className="compare-common-img"
+              />
             ) : (
-              "Product"
+              <div className="compare-no-image">📦</div>
             )}
           </div>
-          <div>
-            <strong>{commonName}</strong>
-            <span>{enriched.length} offers compared</span>
+
+          <div className="compare-product-info">
+            <div className="compare-eyebrow-row">
+              <span className="section-eyebrow">SMARTBUY COMPARISON</span>
+              {commonBrand && <span className="compare-chip brand-chip">{commonBrand}</span>}
+              {commonCategory && <span className="compare-chip category-chip">{commonCategory}</span>}
+            </div>
+
+            <h1 className="compare-product-title">{commonTitle}</h1>
+
+            <div className="compare-hero-meta">
+              <span className="meta-badge">
+                <span className="meta-dot"></span>
+                {enriched.length} marketplace offers compared
+              </span>
+              <span className="meta-sub">Live side-by-side price & feature comparison</span>
+            </div>
           </div>
         </div>
       </section>
@@ -560,15 +777,18 @@ function Compare() {
               <span>Product Image</span>
             </div>
             <div className="compare-row-values">
-              {enriched.map((e) => (
-                <div className="compare-cell image-cell" key={e.index}>
-                  {e.image ? (
-                    <img src={e.image} alt={e.title} className="compare-product-img" />
-                  ) : (
-                    <div className="no-image">No image</div>
-                  )}
-                </div>
-              ))}
+              {enriched.map((e) => {
+                const img = commonImage || e.image;
+                return (
+                  <div className="compare-cell image-cell" key={e.index}>
+                    {img ? (
+                      <img src={img} alt={commonTitle} className="compare-product-img" />
+                    ) : (
+                      <div className="no-image">No image</div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -581,7 +801,7 @@ function Compare() {
             <div className="compare-row-values">
               {enriched.map((e) => (
                 <div className="compare-cell title-cell" key={e.index}>
-                  <span className="cell-value cell-title">{e.title}</span>
+                  <span className="cell-value cell-title">{commonTitle || e.title}</span>
                 </div>
               ))}
             </div>
@@ -736,6 +956,69 @@ function Compare() {
           {/* Meta */}
           <div className="compare-section-divider">
             <span>ℹ️ Additional Details</span>
+          </div>
+
+          <CompareRow
+            label="Brand"
+            icon="🏷️"
+            valueKey="brand"
+            format={(v) => v || "—"}
+          />
+
+          <CompareRow
+            label="Category"
+            icon="📂"
+            valueKey="category"
+            format={(v) => v || "—"}
+          />
+
+          <CompareRow
+            label="Color / Variant"
+            icon="🎨"
+            valueKey={(e) => {
+              const parts = [e.color, e.size].filter(
+                (v) => v && v !== "Not available"
+              );
+              return parts.length ? parts.join(" · ") : null;
+            }}
+            format={(v) => v || "—"}
+          />
+
+          <CompareRow
+            label="Return Window"
+            icon="🔄"
+            valueKey="returnWindow"
+            format={(v) =>
+              typeof v === "number" ? `${v} days` : v || "—"
+            }
+          />
+
+          {/* Description */}
+          <div className="compare-row">
+            <div className="compare-row-label">
+              <span className="row-icon">📝</span>
+              <span>Description</span>
+            </div>
+            <div className="compare-row-values">
+              {enriched.map((e) => {
+                const desc = e.description;
+                const hasDesc = desc && desc !== "Not available";
+                return (
+                  <div
+                    className={`compare-cell ${hasDesc ? "" : "na"}`}
+                    key={e.index}
+                  >
+                    <span className="cell-value description-value">
+                      {hasDesc
+                        ? String(desc).length > 300
+                          ? String(desc).slice(0, 300) + "…"
+                          : desc
+                        : "—"}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           <CompareRow

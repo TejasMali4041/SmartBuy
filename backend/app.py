@@ -11,6 +11,7 @@ from routes.offers import offers
 from routes.users import users
 from routes.scraper import scraper
 from routes.live_search import live_search_bp
+from routes.enrich import enrich_bp
 
 
 # Load variables from .env
@@ -64,6 +65,7 @@ def create_app():
     app.register_blueprint(users)
     app.register_blueprint(scraper)
     app.register_blueprint(live_search_bp)
+    app.register_blueprint(enrich_bp)
 
     # =========================
     # Health Check
