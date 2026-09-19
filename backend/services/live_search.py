@@ -33,6 +33,9 @@ def _build_comparisons(matches):
             "match": {
                 "score": match.get("score", 0),
                 "explanation": match.get("explanation"),
+                "confidence": match.get("confidence"),
+                "variant_conflicts": match.get("variant_conflicts", []),
+                "variant_matched": match.get("variant_matched", []),
             },
             "offers": [
                 {
@@ -40,7 +43,10 @@ def _build_comparisons(matches):
                     "title": _value(source, "title", "name"),
                     "price": _value(source, "price", "sale_price"),
                     "original_price": _value(
-                        source, "original_price", "mrp"
+                        source, "original_price", "mrp", "initial_price"
+                    ),
+                    "discount": _value(
+                        source, "discount", "discount_percentage", "discount_percent"
                     ),
                     "rating": _value(source, "rating", "star_rating"),
                     "review_count": _value(
@@ -54,6 +60,8 @@ def _build_comparisons(matches):
                         source, "availability", "stock"
                     ),
                     "brand": _value(source, "brand"),
+                    "color": _value(source, "color", "colour"),
+                    "size": _value(source, "size", "storage"),
                     "model_number": _value(
                         source,
                         "model_number",
@@ -67,7 +75,10 @@ def _build_comparisons(matches):
                     "title": _value(target, "title", "name"),
                     "price": _value(target, "price", "sale_price"),
                     "original_price": _value(
-                        target, "original_price", "mrp"
+                        target, "original_price", "mrp", "initial_price"
+                    ),
+                    "discount": _value(
+                        target, "discount", "discount_percentage", "discount_percent"
                     ),
                     "rating": _value(target, "rating", "star_rating"),
                     "review_count": _value(
@@ -81,6 +92,8 @@ def _build_comparisons(matches):
                         target, "availability", "stock"
                     ),
                     "brand": _value(target, "brand"),
+                    "color": _value(target, "color", "colour"),
+                    "size": _value(target, "size", "storage"),
                     "model_number": _value(
                         target,
                         "model_number",

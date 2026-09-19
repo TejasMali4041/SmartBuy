@@ -762,6 +762,40 @@ def _normalize_amazon(data, original_url):
         ],
     )
 
+    if (
+        original_price is not None
+        and price is not None
+        and original_price < price
+    ):
+        original_price = None
+
+    discount = _get_number(
+        data,
+        [
+            "discount",
+            "discount_percentage",
+            "discount_percent",
+            "discount_rate",
+            "savings_percentage",
+            "off_percent",
+        ],
+    )
+
+    if (
+        original_price is None
+        and price is not None
+        and discount is not None
+        and 0 < discount < 100
+    ):
+        original_price = round(price / (1.0 - (discount / 100.0)))
+    elif (
+        discount is None
+        and original_price is not None
+        and price is not None
+        and original_price > price
+    ):
+        discount = round(((original_price - price) / original_price) * 100)
+
     rating = _get_number(
         data,
         [
@@ -993,6 +1027,7 @@ def _normalize_amazon(data, original_url):
         ),
         "price": price,
         "original_price": original_price,
+        "discount": discount,
         "rating": rating,
         "review_count": review_count,
         "availability": availability,
@@ -1038,21 +1073,28 @@ def _normalize_flipkart(data, original_url):
             f"Available fields: {list(data.keys())}"
         )
 
-    price = _get_number(
+    special_price = _get_number(
         data,
         [
+            "special_price",
+            "specialprice",
+            "deal_price",
             "sale_price",
             "selling_price",
             "sellingprice",
-            "current_price",
-            "final_price",
-            "deal_price",
             "discounted_price",
             "offer_price",
+            "final_price",
+            "current_price",
+        ],
+    )
+
+    raw_price = _get_number(
+        data,
+        [
             "price",
             "price_value",
             "amount",
-            "special_price",
         ],
     )
 
@@ -1064,11 +1106,22 @@ def _normalize_flipkart(data, original_url):
             "maximum_retail_price",
             "list_price",
             "regular_price",
+            "retail_price",
+            "initial_price",
             "old_price",
             "was_price",
             "strikethrough_price",
         ],
     )
+
+    if special_price is not None and raw_price is not None and special_price < raw_price:
+        if original_price is None:
+            original_price = raw_price
+        price = special_price
+    elif special_price is not None:
+        price = special_price
+    else:
+        price = raw_price
 
     if (
         original_price is not None
@@ -1076,6 +1129,32 @@ def _normalize_flipkart(data, original_url):
         and original_price < price
     ):
         original_price = None
+
+    discount = _get_number(
+        data,
+        [
+            "discount",
+            "discount_percentage",
+            "discount_percent",
+            "discount_rate",
+            "off_percent",
+        ],
+    )
+
+    if (
+        original_price is None
+        and price is not None
+        and discount is not None
+        and 0 < discount < 100
+    ):
+        original_price = round(price / (1.0 - (discount / 100.0)))
+    elif (
+        discount is None
+        and original_price is not None
+        and price is not None
+        and original_price > price
+    ):
+        discount = round(((original_price - price) / original_price) * 100)
 
     rating = _get_number(
         data,
@@ -1329,6 +1408,7 @@ def _normalize_flipkart(data, original_url):
         ),
         "price": price,
         "original_price": original_price,
+        "discount": discount,
         "rating": rating,
         "review_count": review_count,
         "availability": availability,
@@ -1611,6 +1691,56 @@ def _normalize_search_amazon(data):
         ]
     )
 
+    original_price = _get_number(
+        data,
+        [
+            "initial_price",
+            "original_price",
+            "list_price",
+            "mrp",
+            "maximum_retail_price",
+            "was_price",
+            "regular_price",
+            "strikethrough_price",
+            "old_price",
+            "original_price_value",
+        ]
+    )
+
+    if (
+        original_price is not None
+        and price is not None
+        and original_price < price
+    ):
+        original_price = None
+
+    discount = _get_number(
+        data,
+        [
+            "discount",
+            "discount_percentage",
+            "discount_percent",
+            "discount_rate",
+            "savings_percentage",
+            "off_percent",
+        ]
+    )
+
+    if (
+        original_price is None
+        and price is not None
+        and discount is not None
+        and 0 < discount < 100
+    ):
+        original_price = round(price / (1.0 - (discount / 100.0)))
+    elif (
+        discount is None
+        and original_price is not None
+        and price is not None
+        and original_price > price
+    ):
+        discount = round(((original_price - price) / original_price) * 100)
+
     rating = _get_number(
         data,
         [
@@ -1708,6 +1838,8 @@ def _normalize_search_amazon(data):
         "title": title,
         "url": url,
         "price": price,
+        "original_price": original_price,
+        "discount": discount,
         "rating": rating,
         "review_count": review_count,
         "brand": brand,
@@ -1744,17 +1876,87 @@ def _normalize_search_flipkart(data):
     if not title:
         return None
 
-    price = _get_number(
+    special_price = _get_number(
         data,
         [
+            "special_price",
+            "specialprice",
+            "deal_price",
             "sale_price",
             "selling_price",
             "sellingprice",
+            "discounted_price",
             "current_price",
-            "price",
-            "final_price"
+            "final_price",
         ]
     )
+
+    raw_price = _get_number(
+        data,
+        [
+            "price",
+            "price_value",
+            "amount",
+        ]
+    )
+
+    original_price = _get_number(
+        data,
+        [
+            "original_price",
+            "mrp",
+            "maximum_retail_price",
+            "list_price",
+            "regular_price",
+            "retail_price",
+            "initial_price",
+            "old_price",
+            "was_price",
+            "strikethrough_price",
+        ]
+    )
+
+    if special_price is not None and raw_price is not None and special_price < raw_price:
+        if original_price is None:
+            original_price = raw_price
+        price = special_price
+    elif special_price is not None:
+        price = special_price
+    else:
+        price = raw_price
+
+    if (
+        original_price is not None
+        and price is not None
+        and original_price < price
+    ):
+        original_price = None
+
+    discount = _get_number(
+        data,
+        [
+            "discount",
+            "discount_percentage",
+            "discount_percent",
+            "discount_rate",
+            "off_percent",
+        ]
+    )
+
+    if (
+        original_price is None
+        and price is not None
+        and discount is not None
+        and 0 < discount < 100
+    ):
+        original_price = round(price / (1.0 - (discount / 100.0)))
+    elif (
+        discount is None
+        and original_price is not None
+        and price is not None
+        and original_price > price
+    ):
+        discount = round(((original_price - price) / original_price) * 100)
 
     rating = _get_number(
         data,
@@ -1845,6 +2047,8 @@ def _normalize_search_flipkart(data):
         "title": title,
         "url": url,
         "price": price,
+        "original_price": original_price,
+        "discount": discount,
         "rating": rating,
         "review_count": review_count,
         "brand": brand,

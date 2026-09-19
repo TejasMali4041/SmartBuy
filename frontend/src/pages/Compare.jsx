@@ -51,7 +51,7 @@ function getPlatform(offer, index) {
 }
 
 function getTitle(offer) {
-  return firstValue(offer?.title, offer?.name, "Product") || "Product";
+  return firstValue(offer?.title, offer?.name);
 }
 
 function getImage(offer) {
@@ -483,7 +483,7 @@ function Compare() {
           image: getImage(offer),
           price,
           originalPrice,
-          discount: discountPercent(price, originalPrice),
+          discount: offer.discount || discountPercent(price, originalPrice),
           rating: getRating(offer),
           reviews: getReviewCount(offer),
           sellerName: getSellerName(offer),
@@ -512,9 +512,12 @@ function Compare() {
     (best, e) => (e.score > (best?.score ?? -1) ? e : best),
     null
   );
-  const lowestPriceOffer = enriched
-    .filter((e) => typeof e.price === "number")
-    .sort((a, b) => a.price - b.price)[0];
+  const pricedOffers = enriched.filter((e) => typeof e.price === "number");
+  const lowestPriceVal = pricedOffers.length ? Math.min(...pricedOffers.map((e) => e.price)) : null;
+  const lowestPriceOffers = pricedOffers.filter((e) => e.price === lowestPriceVal);
+  const lowestPricePlatformText = lowestPriceOffers.length > 0
+    ? lowestPriceOffers.map(e => e.platform).join(" & ")
+    : "Best available deal";
   const highestRatedOffer = enriched
     .filter((e) => typeof e.rating === "number")
     .sort((a, b) => b.rating - a.rating)[0];
@@ -533,13 +536,15 @@ function Compare() {
   }, [comparison, offers]);
 
   const commonCategory = useMemo(() => {
-    return firstValue(
+    const rawCategory = firstValue(
       comparison?.category,
       offers[0]?.category,
       offers[1]?.category,
       getCategory(offers[0]),
       getCategory(offers[1])
     );
+    if (!rawCategory) return null;
+    return String(rawCategory).split(">").pop().trim();
   }, [comparison, offers]);
 
   const commonTitle = useMemo(() => {
@@ -701,8 +706,8 @@ function Compare() {
           <span className="summary-icon">₹</span>
           <div>
             <small>Lowest Price</small>
-            <strong>{lowestPriceOffer ? formatPrice(lowestPriceOffer.price) : "—"}</strong>
-            <p>{lowestPriceOffer ? lowestPriceOffer.platform : "Best available deal"}</p>
+            <strong>{lowestPriceVal !== null ? formatPrice(lowestPriceVal) : "—"}</strong>
+            <p>{lowestPricePlatformText}</p>
           </div>
         </div>
 
@@ -778,7 +783,7 @@ function Compare() {
             </div>
             <div className="compare-row-values">
               {enriched.map((e) => {
-                const img = commonImage || e.image;
+                const img = e.image || commonImage;
                 return (
                   <div className="compare-cell image-cell" key={e.index}>
                     {img ? (
@@ -801,7 +806,7 @@ function Compare() {
             <div className="compare-row-values">
               {enriched.map((e) => (
                 <div className="compare-cell title-cell" key={e.index}>
-                  <span className="cell-value cell-title">{commonTitle || e.title}</span>
+                  <span className="cell-value cell-title">{e.title || commonTitle || "Product"}</span>
                 </div>
               ))}
             </div>
@@ -973,14 +978,16 @@ function Compare() {
           />
 
           <CompareRow
-            label="Color / Variant"
+            label="Color"
             icon="🎨"
-            valueKey={(e) => {
-              const parts = [e.color, e.size].filter(
-                (v) => v && v !== "Not available"
-              );
-              return parts.length ? parts.join(" · ") : null;
-            }}
+            valueKey="color"
+            format={(v) => v || "—"}
+          />
+
+          <CompareRow
+            label="Storage / RAM"
+            icon="💾"
+            valueKey="size"
             format={(v) => v || "—"}
           />
 

@@ -1188,14 +1188,19 @@ def match_products(
                     **result,
                 })
 
-    # Best pair first. Add a small preference for exact model/identifier so that
-    # a generic family listing does not steal the strongest counterpart.
-    # Prefer exact variant matches (same storage/RAM/specs) over generic
-    # family matches so that S25 128GB matches S25 128GB, not S25 256GB.
+    # Best pair first. Add a strong preference for non-conflicting variants so that
+    # S25 256GB matches S25 256GB rather than stealing a 128GB or 512GB listing.
+    def _has_hard_variant_conflict(c: Dict[str, Any]) -> bool:
+        return any(
+            k in {"storage", "ram", "screen_size", "capacity_kg"}
+            for k in c.get("variant_conflicts", [])
+        )
+
     candidates.sort(
         key=lambda x: (
             x["identifier_match"],
             x["exact_model_match"],
+            not _has_hard_variant_conflict(x),
             x.get("variant_overlap", 0),
             x["score"],
         ),
