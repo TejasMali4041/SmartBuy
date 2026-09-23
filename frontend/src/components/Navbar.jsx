@@ -50,6 +50,7 @@ function Navbar() {
 
   const handleLogout = () => {
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
 
     // Tell Navbar that user logged out
     window.dispatchEvent(new Event("userLogout"));

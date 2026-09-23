@@ -11,22 +11,54 @@ import PriceHistory from "./pages/PriceHistory";
 import ReviewAnalysis from "./pages/ReviewAnalysis";
 import Profile from "./pages/Profile";
 import Navbar from "./components/Navbar";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <BrowserRouter>
-     <Navbar />
+      <Navbar />
       <Routes>
+        {/* Free Public Routes (No login required) */}
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/search" element={<SearchResults />} />
         <Route path="/product/:id" element={<ProductDetails />} />
         <Route path="/compare/:id" element={<Compare />} />
-        <Route path="/recommendation/:id" element={<Recommendation />} />
-        <Route path="/price-history/:id" element={<PriceHistory />} />
-        <Route path="/reviews/:id" element={<ReviewAnalysis />} />
-        <Route path="/profile" element={<Profile />} />
+
+        {/* Members-Only Protected Features (Login Required) */}
+        <Route
+          path="/price-history/:id"
+          element={
+            <ProtectedRoute feature="Price History">
+              <PriceHistory />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/recommendation/:id"
+          element={
+            <ProtectedRoute feature="AI Recommendations">
+              <Recommendation />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/reviews/:id"
+          element={
+            <ProtectedRoute feature="Review Analysis">
+              <ReviewAnalysis />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute feature="Watchlist & Price Alerts">
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

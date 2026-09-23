@@ -1,9 +1,12 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./Login.css";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5000";
 
 function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [formData, setFormData] = useState({
     email: "",
@@ -38,7 +41,7 @@ function Login() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:5000/api/login",
+        `${API_BASE}/api/login`,
         {
           method: "POST",
           headers: {
@@ -54,27 +57,19 @@ function Login() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Invalid email or password.");
+        setError(data.message || data.error || "Invalid email or password.");
         setLoading(false);
         return;
       }
 
-      /*
-       * Save the logged-in user's information.
-       *
-       * This allows Profile.jsx to display
-       * the actual user's name and email.
-       */
+      // Save token & user session
+      if (data.access_token) {
+        localStorage.setItem("token", data.access_token);
+      }
+
       if (data.user) {
-        localStorage.setItem(
-          "user",
-          JSON.stringify(data.user)
-        );
+        localStorage.setItem("user", JSON.stringify(data.user));
       } else {
-        /*
-         * Fallback in case the backend currently
-         * returns email/name directly.
-         */
         localStorage.setItem(
           "user",
           JSON.stringify({
@@ -84,12 +79,12 @@ function Login() {
         );
       }
 
-      /*
-       * IMPORTANT:
-       * After successful login, go to HOME.
-       * Do NOT go directly to Profile.
-       */
-      navigate("/");
+      // Notify Navbar and active components
+      window.dispatchEvent(new Event("userLogin"));
+
+      // Redirect to the originally requested protected page if available, else Home
+      const redirectPath = location.state?.from || "/";
+      navigate(redirectPath, { state: location.state?.forwardState });
 
     } catch (error) {
       console.error("Login error:", error);

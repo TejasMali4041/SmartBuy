@@ -400,6 +400,18 @@
   font-weight: 800;
 }
 
+.platform-listing-tag {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #64748b;
+  background: #f1f5f9;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
 .platform-recommended {
   display: inline-block;
   margin-top: 4px;

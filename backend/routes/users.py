@@ -37,14 +37,6 @@ def add_watchlist(product_id):
     if not product:
         return {"message": "Product not found"}, 404
 
-    existing = Watchlist.query.filter_by(
-        user_id=user_id,
-        product_id=product_id
-    ).first()
-
-    if existing:
-        return {"message": "Product already in watchlist"}, 409
-
     data = request.get_json(silent=True) or {}
     target_price = data.get("target_price")
 
@@ -53,6 +45,22 @@ def add_watchlist(product_id):
             target_price = Decimal(str(target_price))
         except Exception:
             return {"message": "Invalid target price"}, 400
+
+    existing = Watchlist.query.filter_by(
+        user_id=user_id,
+        product_id=product_id
+    ).first()
+
+    if existing:
+        if target_price is not None:
+            existing.target_price = target_price
+            db.session.commit()
+            return {
+                "message": "Watchlist target price updated",
+                "watchlist_id": existing.id,
+                "target_price": float(existing.target_price) if existing.target_price else None
+            }, 200
+        return {"message": "Product already in watchlist", "watchlist_id": existing.id}, 200
 
     item = Watchlist(
         user_id=user_id,

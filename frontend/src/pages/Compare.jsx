@@ -275,91 +275,7 @@ function starBar(rating) {
   return Math.min(100, (rating / 5) * 100);
 }
 
-/* ───────────── SmartBuy score (mirrors backend weights) ────────────── */
 
-function calcSmartBuyScore(offer, allOffers) {
-  const price = getPrice(offer);
-  const rating = getRating(offer);
-  const reviews = getReviewCount(offer);
-  const sellerR = getSellerRating(offer);
-  const offerTxt = getOfferText(offer);
-
-  const allPrices = allOffers
-    .map(getPrice)
-    .filter((p) => typeof p === "number" && p > 0);
-  const lowestPrice = allPrices.length ? Math.min(...allPrices) : 0;
-
-  const pScore =
-    typeof price === "number" && price > 0 && lowestPrice > 0
-      ? Math.min(1, lowestPrice / price)
-      : 0;
-  const rScore = typeof rating === "number" ? Math.min(1, rating / 5) : 0;
-  const rvScore = typeof reviews === "number" ? Math.min(1, reviews / 10000) : 0;
-  const sScore =
-    typeof sellerR === "number" ? Math.min(1, sellerR / 5) : 0.5;
-  const oScore = offerTxt && offerTxt !== "Not available" ? 1 : 0;
-
-  return Math.round(
-    (pScore * 0.4 + rScore * 0.25 + rvScore * 0.15 + sScore * 0.1 + oScore * 0.1) *
-      100
-  );
-}
-
-
-/* ───────────────────────── winner detection ───────────────────────── */
-
-function detectWinners(enriched) {
-  const winners = {};
-
-  // Lowest price
-  const priced = enriched.filter((e) => typeof e.price === "number");
-  if (priced.length > 1) {
-    const min = Math.min(...priced.map((e) => e.price));
-    const winning = priced.filter((e) => e.price === min);
-    if (winning.length === 1) winners.price = winning[0].index;
-  }
-
-  // Highest rating
-  const rated = enriched.filter((e) => typeof e.rating === "number");
-  if (rated.length > 1) {
-    const max = Math.max(...rated.map((e) => e.rating));
-    const winning = rated.filter((e) => e.rating === max);
-    if (winning.length === 1) winners.rating = winning[0].index;
-  }
-
-  // Most reviews
-  const reviewed = enriched.filter((e) => typeof e.reviews === "number");
-  if (reviewed.length > 1) {
-    const max = Math.max(...reviewed.map((e) => e.reviews));
-    const winning = reviewed.filter((e) => e.reviews === max);
-    if (winning.length === 1) winners.reviews = winning[0].index;
-  }
-
-  // Biggest discount
-  const discounted = enriched.filter((e) => typeof e.discount === "number");
-  if (discounted.length > 1) {
-    const max = Math.max(...discounted.map((e) => e.discount));
-    const winning = discounted.filter((e) => e.discount === max);
-    if (winning.length === 1) winners.discount = winning[0].index;
-  }
-
-  // Best seller rating
-  const sellers = enriched.filter((e) => typeof e.sellerRating === "number");
-  if (sellers.length > 1) {
-    const max = Math.max(...sellers.map((e) => e.sellerRating));
-    const winning = sellers.filter((e) => e.sellerRating === max);
-    if (winning.length === 1) winners.sellerRating = winning[0].index;
-  }
-
-  // Best SmartBuy score
-  if (enriched.length > 1) {
-    const max = Math.max(...enriched.map((e) => e.score));
-    const winning = enriched.filter((e) => e.score === max);
-    if (winning.length === 1) winners.score = winning[0].index;
-  }
-
-  return winners;
-}
 
 
 /* ────────────────────────────── component ────────────────────────────── */
@@ -499,31 +415,10 @@ function Compare() {
           color: getColor(offer),
           size: getSize(offer),
           returnWindow: getReturnWindow(offer),
-          score: calcSmartBuyScore(offer, offers),
         };
       }),
     [offers]
   );
-
-  const winners = useMemo(() => detectWinners(enriched), [enriched]);
-
-  /* Summary stats */
-  const bestOverall = enriched.reduce(
-    (best, e) => (e.score > (best?.score ?? -1) ? e : best),
-    null
-  );
-  const pricedOffers = enriched.filter((e) => typeof e.price === "number");
-  const lowestPriceVal = pricedOffers.length ? Math.min(...pricedOffers.map((e) => e.price)) : null;
-  const lowestPriceOffers = pricedOffers.filter((e) => e.price === lowestPriceVal);
-  const lowestPricePlatformText = lowestPriceOffers.length > 0
-    ? lowestPriceOffers.map(e => e.platform).join(" & ")
-    : "Best available deal";
-  const highestRatedOffer = enriched
-    .filter((e) => typeof e.rating === "number")
-    .sort((a, b) => b.rating - a.rating)[0];
-  const biggestDiscount = enriched
-    .filter((e) => typeof e.discount === "number")
-    .sort((a, b) => b.discount - a.discount)[0];
 
   const commonBrand = useMemo(() => {
     return firstValue(
@@ -590,7 +485,7 @@ function Compare() {
   }
 
   /* ── Helper: render a comparison row ── */
-  function CompareRow({ label, icon, valueKey, format, winnerKey, highlight }) {
+  function CompareRow({ label, icon, valueKey, format, highlight }) {
     return (
       <div className="compare-row">
         <div className="compare-row-label">
@@ -602,8 +497,6 @@ function Compare() {
           {enriched.map((e) => {
             const raw = typeof valueKey === "function" ? valueKey(e) : e[valueKey];
             const display = format ? format(raw, e) : (raw ?? "—");
-            const isWinner =
-              winnerKey && winners[winnerKey] === e.index;
             const isNA =
               display === "—" ||
               display === "Not available" ||
@@ -612,10 +505,9 @@ function Compare() {
 
             return (
               <div
-                className={`compare-cell ${isWinner ? "winner" : ""} ${isNA ? "na" : ""} ${highlight ? "highlight" : ""}`}
+                className={`compare-cell ${isNA ? "na" : ""} ${highlight ? "highlight" : ""}`}
                 key={e.index}
               >
-                {isWinner && <span className="winner-badge">Best</span>}
                 <span className="cell-value">{display}</span>
               </div>
             );
@@ -648,11 +540,53 @@ function Compare() {
         </div>
       )}
 
-      {/* Breadcrumb */}
-      <div className="compare-breadcrumb">
+      {/* Breadcrumb & Action Bar */}
+      <div className="compare-breadcrumb" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "12px" }}>
         <Link to={`/product/${id}`} state={{ comparison }}>
           ← Back to Product
         </Link>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+          <Link
+            to={`/price-history/${id}`}
+            state={{ comparison }}
+            className="compare-price-history-link"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              color: "#4f46e5",
+              fontWeight: "600",
+              fontSize: "13px",
+              textDecoration: "none",
+              background: "rgba(79, 70, 229, 0.08)",
+              padding: "6px 14px",
+              borderRadius: "8px",
+              border: "1px solid rgba(79, 70, 229, 0.2)",
+            }}
+          >
+            📊 Price History & Trends →
+          </Link>
+          <Link
+            to={`/recommendation/${id}`}
+            state={{ comparison }}
+            className="compare-recommendation-link"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              color: "#2563eb",
+              fontWeight: "600",
+              fontSize: "13px",
+              textDecoration: "none",
+              background: "#eff6ff",
+              padding: "6px 14px",
+              borderRadius: "8px",
+              border: "1px solid #bfdbfe",
+            }}
+          >
+            ✦ SmartBuy Recommendation →
+          </Link>
+        </div>
       </div>
 
       {/* ─── Header: Common Image & Product Title ─── */}
@@ -690,47 +624,6 @@ function Compare() {
         </div>
       </section>
 
-      {/* ─── Summary Cards ─── */}
-      <section className="comparison-summary">
-
-        <div className={`summary-card ${bestOverall ? "best" : ""}`}>
-          <span className="summary-icon">🏆</span>
-          <div>
-            <small>Best Overall</small>
-            <strong>{bestOverall ? bestOverall.platform : "—"}</strong>
-            <p>SmartBuy Score {bestOverall?.score ?? "—"}/100</p>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <span className="summary-icon">₹</span>
-          <div>
-            <small>Lowest Price</small>
-            <strong>{lowestPriceVal !== null ? formatPrice(lowestPriceVal) : "—"}</strong>
-            <p>{lowestPricePlatformText}</p>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <span className="summary-icon">⭐</span>
-          <div>
-            <small>Highest Rated</small>
-            <strong>{highestRatedOffer ? `${highestRatedOffer.rating.toFixed(1)} / 5` : "—"}</strong>
-            <p>{highestRatedOffer ? highestRatedOffer.platform : "Based on ratings"}</p>
-          </div>
-        </div>
-
-        <div className="summary-card">
-          <span className="summary-icon">🏷️</span>
-          <div>
-            <small>Biggest Savings</small>
-            <strong>{biggestDiscount ? `${biggestDiscount.discount}% OFF` : "—"}</strong>
-            <p>{biggestDiscount ? biggestDiscount.platform : "Best discount"}</p>
-          </div>
-        </div>
-
-      </section>
-
       {/* ─── Platform Headers ─── */}
       <section className="compare-platforms">
         <div className="platform-label-spacer" />
@@ -741,26 +634,7 @@ function Compare() {
             </div>
             <div className="platform-meta">
               <strong>{e.platform}</strong>
-              {winners.score === e.index && (
-                <span className="platform-recommended">★ Recommended</span>
-              )}
-            </div>
-            <div className="platform-score">
-              <div className="score-ring">
-                <svg viewBox="0 0 36 36">
-                  <path
-                    className="score-ring-bg"
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                  <path
-                    className="score-ring-fill"
-                    strokeDasharray={`${e.score}, 100`}
-                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  />
-                </svg>
-                <span className="score-number">{e.score}</span>
-              </div>
-              <small>SmartBuy Score</small>
+              <span className="platform-listing-tag">Live Marketplace Listing</span>
             </div>
           </div>
         ))}
@@ -822,7 +696,6 @@ function Compare() {
             icon="💵"
             valueKey="price"
             format={(v) => formatPrice(v)}
-            winnerKey="price"
             highlight
           />
 
@@ -838,7 +711,6 @@ function Compare() {
             icon="📉"
             valueKey="discount"
             format={(v) => (typeof v === "number" ? `${v}% OFF` : "—")}
-            winnerKey="discount"
           />
 
           {/* Ratings Section Header */}
@@ -854,10 +726,8 @@ function Compare() {
             </div>
             <div className="compare-row-values">
               {enriched.map((e) => {
-                const isWinner = winners.rating === e.index;
                 return (
-                  <div className={`compare-cell ${isWinner ? "winner" : ""}`} key={e.index}>
-                    {isWinner && <span className="winner-badge">Best</span>}
+                  <div className="compare-cell" key={e.index}>
                     <div className="rating-display">
                       <strong className="rating-value">
                         {e.rating !== null ? e.rating.toFixed(1) : "—"}
@@ -889,7 +759,6 @@ function Compare() {
             icon="💬"
             valueKey="reviews"
             format={(v) => (typeof v === "number" ? formatCount(v) + " reviews" : "—")}
-            winnerKey="reviews"
           />
 
           {/* Seller Section Header */}
@@ -909,7 +778,6 @@ function Compare() {
             icon="⭐"
             valueKey="sellerRating"
             format={(v) => (typeof v === "number" ? `${v.toFixed(1)} / 5` : "—")}
-            winnerKey="sellerRating"
           />
 
           {/* Delivery Section Header */}
@@ -1063,66 +931,12 @@ function Compare() {
         </div>
       </section>
 
-      {/* ─── SmartBuy Score Breakdown ─── */}
-      <section className="compare-analysis">
-        <div className="analysis-copy">
-          <p className="section-eyebrow">SMARTBUY ANALYSIS</p>
-          <h2>
-            The cheapest offer isn't
-            <span> always the best.</span>
-          </h2>
-          <p>
-            SmartBuy evaluates multiple factors so you can understand the
-            difference between price and actual value.
-          </p>
-
-          <div className="score-weights">
-            <div className="weight-item"><span>Price</span><strong>40%</strong></div>
-            <div className="weight-item"><span>Rating</span><strong>25%</strong></div>
-            <div className="weight-item"><span>Reviews</span><strong>15%</strong></div>
-            <div className="weight-item"><span>Seller</span><strong>10%</strong></div>
-            <div className="weight-item"><span>Offers</span><strong>10%</strong></div>
-          </div>
-        </div>
-
-        <div className="score-breakdown">
-          {enriched.map((e) => (
-            <div className="score-platform-block" key={e.index}>
-              <div className="score-platform-name">
-                <div className={`platform-dot ${platformClass(e.platform)}-dot`} />
-                <strong>{e.platform}</strong>
-                <span className="score-total">{e.score}/100</span>
-              </div>
-
-              {[
-                { label: "Price", value: Math.round(e.score * 0.4 / 0.4) * 0.4, max: 40 },
-                { label: "Rating", value: (getRating(e.offer) !== null ? Math.min(1, getRating(e.offer) / 5) : 0) * 25, max: 25 },
-                { label: "Reviews", value: (getReviewCount(e.offer) !== null ? Math.min(1, getReviewCount(e.offer) / 10000) : 0) * 15, max: 15 },
-                { label: "Seller", value: (getSellerRating(e.offer) !== null ? Math.min(1, getSellerRating(e.offer) / 5) : 0.5) * 10, max: 10 },
-                { label: "Offers", value: (e.offerText && e.offerText !== "Not available" ? 1 : 0) * 10, max: 10 },
-              ].map((factor) => (
-                <div className="score-row" key={`${e.index}-${factor.label}`}>
-                  <span className="score-label">{factor.label}</span>
-                  <div className="score-bar">
-                    <div
-                      className="score-bar-fill"
-                      style={{ width: `${(factor.value / factor.max) * 100}%` }}
-                    />
-                  </div>
-                  <strong>{Math.round(factor.value)}/{factor.max}</strong>
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ─── CTA ─── */}
+      {/* ─── CTA to Dedicated Recommendation Page ─── */}
       <section className="compare-cta">
         <div>
-          <h2>Want SmartBuy to choose for you?</h2>
+          <h2>Looking for a buying recommendation?</h2>
           <p>
-            Get a personalized recommendation based on multiple purchase factors.
+            Get unbiased, multi-factor AI scoring, seller risk analysis, and personalized verdicts on the dedicated Recommendation page.
           </p>
         </div>
         <Link
@@ -1130,7 +944,7 @@ function Compare() {
           state={{ comparison }}
           className="recommend-button"
         >
-          ✦ Get Smart Recommendation
+          ✦ View SmartBuy Recommendation →
         </Link>
       </section>
 
