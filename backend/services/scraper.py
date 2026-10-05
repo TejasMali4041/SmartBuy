@@ -545,12 +545,12 @@ def _get_snapshot(snapshot_id, timeout=300):
                     ready = True
                     break
 
-                time.sleep(5)
+                time.sleep(2)
                 continue
 
             if response.status_code in {202, 204, 404}:
                 print("[SmartBuy] Snapshot still processing...")
-                time.sleep(5)
+                time.sleep(2)
                 continue
 
             response.raise_for_status()
@@ -560,7 +560,7 @@ def _get_snapshot(snapshot_id, timeout=300):
                 "[SmartBuy] Progress check failed; retrying:",
                 exc
             )
-            time.sleep(5)
+            time.sleep(2)
 
     if not ready:
         raise TimeoutError(
@@ -584,7 +584,7 @@ def _get_snapshot(snapshot_id, timeout=300):
                 "[SmartBuy] Snapshot download not ready yet; "
                 "checking progress again..."
             )
-            time.sleep(5)
+            time.sleep(2)
             continue
 
         response.raise_for_status()
@@ -629,7 +629,7 @@ def _get_snapshot(snapshot_id, timeout=300):
                                 "Bright Data snapshot failed: "
                                 f"{progress}"
                             )
-                    time.sleep(5)
+                    time.sleep(2)
 
                 if not ready:
                     break

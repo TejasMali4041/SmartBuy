@@ -1175,9 +1175,48 @@ def match_products(
         _brand(p) for p in source + target if _brand(p)
     }
 
+    # Pre-compute per-product attributes once to avoid redundant
+    # recomputation across O(n×m) pairs.
+    source_brands = [_brand(p) for p in source]
+    target_brands = [_brand(p) for p in target]
+    source_categories = [detect_category(p) for p in source]
+    target_categories = [detect_category(p) for p in target]
+    source_roles = [_detect_role(p) for p in source]
+    target_roles = [_detect_role(p) for p in target]
+
     candidates: List[Dict[str, Any]] = []
     for i, a in enumerate(source):
+        ba = source_brands[i]
+        cat_a = source_categories[i]
+        role_a = source_roles[i]
+
         for j, b in enumerate(target):
+            bb = target_brands[j]
+            cat_b = target_categories[j]
+            role_b = target_roles[j]
+
+            # Fast pre-filter: skip pairs that calculate_pair_match
+            # would hard-reject. Identical to the hard_reject checks
+            # inside calculate_pair_match, preserving exact same results.
+            if ba and bb and ba != bb:
+                continue
+            if {role_a, role_b} == {"main", "accessory"}:
+                continue
+            if role_a == "accessory" and role_b == "accessory":
+                if cat_a != cat_b:
+                    continue
+            cat_compat = (
+                cat_a == cat_b
+                or cat_a == "general"
+                or cat_b == "general"
+            )
+            if (
+                not cat_compat
+                and role_a != "unknown"
+                and role_b != "unknown"
+            ):
+                continue
+
             result = calculate_pair_match(a, b, known_brands=known_brands)
             if result["is_match"] and result["score"] >= min_score:
                 candidates.append({
