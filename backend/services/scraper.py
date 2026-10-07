@@ -293,6 +293,27 @@ def _get_number(data, aliases):
     )
 
 
+def _get_image_url(data, aliases):
+    field = _get_field(data, aliases)
+    if isinstance(field, list):
+        for item in field:
+            if isinstance(item, str) and item.strip().startswith(("http://", "https://", "//")):
+                return item.strip()
+            elif isinstance(item, dict):
+                for k in ["url", "image", "src", "link", "image_url"]:
+                    v = item.get(k)
+                    if isinstance(v, str) and v.strip().startswith(("http://", "https://", "//")):
+                        return v.strip()
+    elif isinstance(field, str) and field.strip().startswith(("http://", "https://", "//")):
+        return field.strip()
+    elif isinstance(field, dict):
+        for k in ["url", "image", "src", "link", "image_url"]:
+            v = field.get(k)
+            if isinstance(v, str) and v.strip().startswith(("http://", "https://", "//")):
+                return v.strip()
+    return None
+
+
 # =========================================================
 # PLATFORM DETECTION
 # =========================================================
@@ -1746,7 +1767,11 @@ def _normalize_search_amazon(data):
         [
             "rating",
             "star_rating",
-            "stars"
+            "stars",
+            "average_rating",
+            "customer_rating",
+            "average_customer_review",
+            "rating_value",
         ]
     )
 
@@ -1757,7 +1782,12 @@ def _normalize_search_amazon(data):
                 "review_count",
                 "reviews_count",
                 "rating_count",
-                "ratings_total"
+                "ratings_total",
+                "total_reviews",
+                "total_ratings",
+                "number_of_customer_reviews",
+                "number_of_customer_ratings",
+                "reviews",
             ]
         ),
         0
@@ -1767,20 +1797,24 @@ def _normalize_search_amazon(data):
         data,
         [
             "brand",
-            "brand_name"
+            "brand_name",
+            "manufacturer",
         ],
         default=None
     )
 
-    image_url = _get_text(
+    image_url = _get_image_url(
         data,
         [
             "image",
             "image_url",
             "main_image",
-            "thumbnail"
-        ],
-        default=None
+            "thumbnail",
+            "images",
+            "image_urls",
+            "primary_image",
+            "product_image",
+        ]
     )
 
     url = _get_text(
@@ -1833,6 +1867,93 @@ def _normalize_search_amazon(data):
         default=None
     )
 
+    offer_text = _get_text(
+        data,
+        [
+            "deal_text",
+            "offer_text",
+            "offer",
+            "offers",
+            "coupon",
+            "coupon_text",
+            "promotion",
+            "promo_text",
+            "discount_text",
+            "badge",
+        ],
+        default=None
+    )
+
+    delivery_text = _get_text(
+        data,
+        [
+            "delivery_text",
+            "delivery",
+            "shipping",
+            "shipping_text",
+            "delivery_info",
+            "estimated_delivery",
+            "delivery_date",
+            "prime",
+        ],
+        default=None
+    )
+
+    seller_name = _get_text(
+        data,
+        [
+            "seller_name",
+            "seller",
+            "sold_by",
+            "merchant_name",
+            "merchant",
+            "store_name",
+        ],
+        default=None
+    )
+
+    seller_rating = _get_number(
+        data,
+        [
+            "seller_rating",
+            "seller_star_rating",
+            "seller_feedback_rating",
+            "merchant_rating",
+        ]
+    )
+
+    category = _get_text(
+        data,
+        [
+            "category",
+            "department",
+            "breadcrumbs",
+            "product_type",
+            "subcategory",
+        ],
+        default=None
+    )
+
+    description = _get_text(
+        data,
+        [
+            "description",
+            "features",
+            "about_product",
+            "about_this_item",
+            "highlights",
+        ],
+        default=None
+    )
+
+    raw_avail = _get_field(data, ["availability", "stock", "stock_status", "in_stock"])
+    if raw_avail in (1, "1", True, "In Stock", "in_stock", "Available"):
+        availability = "In Stock"
+    elif raw_avail in (0, "0", False, "Out of Stock", "out_of_stock"):
+        availability = "Out of Stock"
+    else:
+        availability = str(raw_avail).strip() if raw_avail else None
+
     return {
         "platform": "Amazon",
         "title": title,
@@ -1848,11 +1969,13 @@ def _normalize_search_amazon(data):
         "color": color,
         "size": size,
         "asin": asin,
-        "availability": _get_text(
-            data,
-            ["availability", "stock"],
-            default=None
-        ),
+        "offer_text": offer_text,
+        "delivery_text": delivery_text,
+        "seller_name": seller_name,
+        "seller_rating": seller_rating,
+        "category": category,
+        "description": description,
+        "availability": availability,
         "normalized_name": normalize_product_name(
             title
         ),
@@ -1903,10 +2026,10 @@ def _normalize_search_flipkart(data):
     original_price = _get_number(
         data,
         [
+            "list_price",
             "original_price",
             "mrp",
             "maximum_retail_price",
-            "list_price",
             "regular_price",
             "retail_price",
             "initial_price",
@@ -1940,6 +2063,7 @@ def _normalize_search_flipkart(data):
             "discount_percent",
             "discount_rate",
             "off_percent",
+            "promo_text",
         ]
     )
 
@@ -1961,9 +2085,15 @@ def _normalize_search_flipkart(data):
     rating = _get_number(
         data,
         [
-            "star_rating",
+            "average_customer_review",
             "rating",
-            "stars"
+            "star_rating",
+            "stars",
+            "rating_value",
+            "product_rating",
+            "average_rating",
+            "customer_rating",
+            "ratings",
         ]
     )
 
@@ -1971,10 +2101,16 @@ def _normalize_search_flipkart(data):
         _get_field(
             data,
             [
+                "number_of_customer_ratings",
+                "number_of_customer_reviews",
                 "review_count",
                 "reviews_count",
                 "rating_count",
-                "ratings_total"
+                "ratings_total",
+                "total_reviews",
+                "total_ratings",
+                "reviews",
+                "customer_reviews_count",
             ]
         ),
         0
@@ -1984,19 +2120,24 @@ def _normalize_search_flipkart(data):
         data,
         [
             "brand",
-            "brand_name"
+            "brand_name",
+            "manufacturer",
         ],
         default=None
     )
 
-    image_url = _get_text(
+    image_url = _get_image_url(
         data,
         [
-            "image_url",
+            "image_urls",
             "image",
-            "thumbnail"
-        ],
-        default=None
+            "image_url",
+            "images",
+            "main_image",
+            "thumbnail",
+            "primary_image",
+            "product_image",
+        ]
     )
 
     url = _get_text(
@@ -2042,6 +2183,103 @@ def _normalize_search_flipkart(data):
         default=None
     )
 
+    item_id = _get_text(
+        data,
+        [
+            "item_id",
+            "sku",
+            "variant_id",
+            "item_number",
+        ],
+        default=None
+    )
+
+    offer_text = _get_text(
+        data,
+        [
+            "promo_text",
+            "skus_coupons",
+            "is_promo",
+            "deal_text",
+            "offer",
+            "offer_text",
+            "offers",
+            "promotion",
+            "discount_text",
+            "coupon",
+        ],
+        default=None
+    )
+
+    delivery_text = _get_text(
+        data,
+        [
+            "delivery_text",
+            "delivery",
+            "shipping",
+            "shipping_text",
+            "delivery_info",
+            "estimated_delivery",
+            "delivery_date",
+        ],
+        default=None
+    )
+
+    seller_name = _get_text(
+        data,
+        [
+            "seller_name",
+            "seller",
+            "sold_by",
+            "merchant_name",
+            "merchant",
+            "store_name",
+        ],
+        default=None
+    )
+
+    seller_rating = _get_number(
+        data,
+        [
+            "seller_rating",
+            "seller_star_rating",
+            "seller_feedback_rating",
+            "merchant_rating",
+        ]
+    )
+
+    category = _get_text(
+        data,
+        [
+            "department",
+            "breadcrumbs",
+            "category",
+            "product_type",
+            "subcategory",
+        ],
+        default=None
+    )
+
+    description = _get_text(
+        data,
+        [
+            "features",
+            "description",
+            "about_product",
+            "about_this_item",
+            "highlights",
+        ],
+        default=None
+    )
+
+    raw_avail = _get_field(data, ["availability", "stock", "stock_status", "in_stock"])
+    if raw_avail in (1, "1", True, "In Stock", "in_stock", "Available"):
+        availability = "In Stock"
+    elif raw_avail in (0, "0", False, "Out of Stock", "out_of_stock"):
+        availability = "Out of Stock"
+    else:
+        availability = str(raw_avail).strip() if raw_avail else None
+
     return {
         "platform": "Flipkart",
         "title": title,
@@ -2056,23 +2294,14 @@ def _normalize_search_flipkart(data):
         "model_number": model_number,
         "color": color,
         "size": size,
-        "item_id": _get_text(
-            data,
-            [
-                "item_id",
-                "sku",
-                "variant_id"
-            ],
-            default=None
-        ),
-        "availability": _get_text(
-            data,
-            [
-                "availability",
-                "stock"
-            ],
-            default=None
-        ),
+        "item_id": item_id,
+        "offer_text": offer_text,
+        "delivery_text": delivery_text,
+        "seller_name": seller_name,
+        "seller_rating": seller_rating,
+        "category": category,
+        "description": description,
+        "availability": availability,
         "normalized_name": normalize_product_name(
             title
         ),

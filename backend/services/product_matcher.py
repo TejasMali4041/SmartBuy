@@ -46,10 +46,9 @@ GENERIC_WORDS = {
     "new", "latest", "original", "genuine", "official", "sale", "offer",
     "best", "buy", "online", "product", "item", "available", "free",
     "shipping", "delivery", "with", "for", "the", "and", "from", "by",
-    "pack", "piece", "pieces", "set", "combo", "kit", "amazon", "flipkart",
-    "meesho", "myntra", "india", "indian", "discount", "deal", "colour",
-    "color", "model", "number", "no", "nos", "includes", "included",
-    "newest", "officially", "saleprice", "dealprice",
+    "amazon", "flipkart", "meesho", "myntra", "india", "indian", "discount",
+    "deal", "colour", "color", "model", "number", "no", "nos", "includes",
+    "included", "newest", "officially", "saleprice", "dealprice",
 }
 
 AUDIENCE_WORDS = {
@@ -201,6 +200,8 @@ SPEC_STARTERS = {
     "gb", "tb", "gib", "mah", "ml", "hz", "inch", "inches", "ssd", "hdd",
     "ram", "memory", "storage", "processor", "display", "camera", "capacity",
     "kg", "litre", "liter", "rpm", "watt", "watts", "voltage", "volt", "v",
+    "g", "gm", "gms", "gram", "grams", "ltr", "litres", "liters", "pcs",
+    "piece", "pieces", "pack", "packs",
 }
 
 FEATURE_NOISE = {
@@ -351,13 +352,58 @@ def _extract_quantity_attributes(text: str) -> Dict[str, str]:
     text = _clean_text(text)
     attrs: Dict[str, str] = {}
 
+    # Pack count extraction (e.g. "Pack of 2", "Pack of 4", "Set of 3", "2 Pack", "4 pcs", "2x100g")
+    pack_match = (
+        re.search(r"\bpack\s*of\s*(\d+)\b", text) or
+        re.search(r"\bset\s*of\s*(\d+)\b", text) or
+        re.search(r"\bcombo\s*of\s*(\d+)\b", text) or
+        re.search(r"\b(\d+)\s*[- ]?pack\b", text) or
+        re.search(r"\b(\d+)\s*(?:pcs|pieces?|pc)\b", text) or
+        re.search(r"\b(\d+)\s*x\s*\d+\s*(?:g|gm|grams?|kg|ml|l|ltr)\b", text)
+    )
+    if pack_match:
+        attrs["pack_count"] = pack_match.group(1)
+    elif re.search(r"\btwin\s*pack\b", text):
+        attrs["pack_count"] = "2"
+    elif re.search(r"\btriple\s*pack\b", text):
+        attrs["pack_count"] = "3"
+    elif re.search(r"\bquad\s*pack\b", text):
+        attrs["pack_count"] = "4"
+    elif re.search(r"\bsingle\s*pack\b", text):
+        attrs["pack_count"] = "1"
+
+    # Weight in grams / kg (e.g. 100g, 100 gm, 1kg, 250g)
+    kg_match = re.search(r"\b(\d+(?:\.\d+)?)\s*(?:kg|kgs|kilograms?)\b", text)
+    if kg_match:
+        g_val = int(float(kg_match.group(1)) * 1000)
+        attrs["unit_weight_g"] = f"{g_val}g"
+        attrs["capacity_kg"] = f"{kg_match.group(1)}kg"
+    else:
+        g_match = re.search(r"\b(\d+(?:\.\d+)?)\s*(?:g|gm|gms|grams?)\b", text)
+        if g_match:
+            attrs["unit_weight_g"] = f"{int(float(g_match.group(1)))}g"
+
+    # Volume in ml / liters (e.g. 100ml, 1l, 500ml)
+    l_match = re.search(r"\b(\d+(?:\.\d+)?)\s*(?:l|ltr|litres?|liters?)\b", text)
+    if l_match:
+        ml_val = int(float(l_match.group(1)) * 1000)
+        attrs["unit_volume_ml"] = f"{ml_val}ml"
+        attrs["capacity_l"] = f"{l_match.group(1)}l"
+    else:
+        ml_match = re.search(r"\b(\d+(?:\.\d+)?)\s*(?:ml|millilitres?|milliliters?)\b", text)
+        if ml_match:
+            attrs["unit_volume_ml"] = f"{int(float(ml_match.group(1)))}ml"
+
+    # Unit count (e.g. 60 capsules, 100 wipes)
+    count_match = re.search(r"\b(\d+)\s*(?:tablets?|capsules?|softgels?|gummies|sheets?|wipes?|pods?|strips?|diapers?|condoms?)\b", text)
+    if count_match:
+        attrs["unit_count"] = count_match.group(1)
+
     patterns = {
         "ram": r"\b(\d+)\s*(?:gb|gib)\s*(?:ram|memory)\b",
         "storage": r"\b(\d+(?:\.\d+)?)\s*(tb|gb)\s*(?:ssd|hdd|storage)\b(?!\s*ram)",
         "screen_size": r"\b(\d+(?:\.\d+)?)\s*(?:inch|inches)\b",
         "refresh_rate": r"\b(\d+)\s*hz\b",
-        "capacity_kg": r"\b(\d+(?:\.\d+)?)\s*kg\b",
-        "capacity_l": r"\b(\d+(?:\.\d+)?)\s*(?:l|litre|liter)\b",
         "battery": r"\b(\d+(?:\.\d+)?)\s*mah\b",
         "power": r"\b(\d+(?:\.\d+)?)\s*(?:w|watt|watts)\b",
         "rpm": r"\b(\d+)\s*rpm\b",
@@ -709,6 +755,7 @@ def _extract_variant_spec(product: Dict[str, Any]) -> Dict[str, str]:
     for key in (
         "storage", "ram", "capacity_kg", "capacity_l", "battery",
         "screen_size", "power", "processor", "gpu",
+        "pack_count", "unit_count", "unit_weight_g", "unit_volume_ml",
     ):
         if key in qty:
             spec[key] = qty[key]
@@ -1048,6 +1095,21 @@ def calculate_pair_match(
         if family_sim < 0.25 and len(family_fp_a) >= 3 and len(family_fp_b) >= 3:
             hard_reject = True
             reasons.append("different product families")
+
+    # 5) Pack / unit count mismatch is a hard reject.
+    # "Pack of 2" vs "Pack of 4" or "60 capsules" vs "120 capsules" are
+    # fundamentally different SKUs, not variants of the same product.
+    if not identifier_match and not hard_reject:
+        pc_a = variant_a.get("pack_count")
+        pc_b = variant_b.get("pack_count")
+        if pc_a and pc_b and pc_a != pc_b:
+            hard_reject = True
+            reasons.append(f"different pack count: {pc_a} vs {pc_b}")
+        uc_a = variant_a.get("unit_count")
+        uc_b = variant_b.get("unit_count")
+        if uc_a and uc_b and uc_a != uc_b:
+            hard_reject = True
+            reasons.append(f"different unit count: {uc_a} vs {uc_b}")
 
     # A pair with no meaningful identity evidence should not pass merely because
     # both titles say the same generic category.

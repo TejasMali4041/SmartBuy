@@ -8,7 +8,7 @@ from models.product import Product
 from models.offer import Offer
 from models.search_history import SearchHistory
 from services.normalizer import normalize_product_name
-from services.recommendation import calculate_offer_score
+from services.recommendation import calculate_offer_score, analyze_recommendation
 
 
 products = Blueprint("products", __name__)
@@ -262,6 +262,20 @@ def recommendations():
     }
 
 
-# IMPORTANT:
-# The old /api/search/live route has intentionally been removed.
-# Live cross-platform search is handled only by routes/live_search.py.
+@products.get("/api/products/<int:product_id>/recommendation")
+def get_product_recommendation(product_id):
+    persona = request.args.get("persona", "balanced").strip().lower()
+    product = db.session.get(Product, product_id)
+    if not product:
+        return {"message": "Product not found"}, 404
+
+    p_dict = product_to_dict(product, include_offers=True)
+    analysis = analyze_recommendation(p_dict, persona=persona)
+    return {
+        "product_id": product.id,
+        "product_name": product.name,
+        "brand": product.brand,
+        "image_url": product.image_url,
+        "recommendation": analysis,
+    }
+
