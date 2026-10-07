@@ -9,6 +9,7 @@ from models.offer import Offer
 from models.search_history import SearchHistory
 from services.normalizer import normalize_product_name
 from services.recommendation import calculate_offer_score, analyze_recommendation
+from services.ai_recommendation import analyze_recommendation_with_gemini
 
 
 products = Blueprint("products", __name__)
@@ -270,12 +271,40 @@ def get_product_recommendation(product_id):
         return {"message": "Product not found"}, 404
 
     p_dict = product_to_dict(product, include_offers=True)
-    analysis = analyze_recommendation(p_dict, persona=persona)
+    analysis = analyze_recommendation_with_gemini(p_dict, persona=persona)
     return {
         "product_id": product.id,
         "product_name": product.name,
         "brand": product.brand,
         "image_url": product.image_url,
+        "recommendation": analysis,
+    }
+
+
+@products.route("/api/recommendations/ai", methods=["POST", "GET"])
+def get_ai_recommendation():
+    """
+    Accepts comparison payload via POST or product_id via GET,
+    evaluating offers with Gemini AI or falling back to the rule-based engine.
+    """
+    if request.method == "POST":
+        data = request.get_json(silent=True) or {}
+        comparison = data.get("comparison") or data.get("product") or data
+        persona = str(data.get("persona", "balanced")).strip().lower()
+    else:
+        product_id = request.args.get("product_id", type=int)
+        persona = request.args.get("persona", "balanced").strip().lower()
+        if product_id:
+            product = db.session.get(Product, product_id)
+            if not product:
+                return {"message": "Product not found"}, 404
+            comparison = product_to_dict(product, include_offers=True)
+        else:
+            return {"error": "Missing comparison payload or product_id"}, 400
+
+    analysis = analyze_recommendation_with_gemini(comparison, persona=persona)
+    return {
+        "success": True,
         "recommendation": analysis,
     }
 

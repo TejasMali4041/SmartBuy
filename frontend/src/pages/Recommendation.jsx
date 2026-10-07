@@ -95,12 +95,63 @@ export default function Recommendation() {
     };
   }, [id, comparison]);
 
-  // Evaluate recommendation dynamically whenever comparison or persona changes
-  const analysis = useMemo(() => {
+  // Client-side baseline evaluation for instant zero-latency UI
+  const clientAnalysis = useMemo(() => {
     if (!comparison) return null;
     return evaluateComparisonClient(comparison, selectedPersona);
   }, [comparison, selectedPersona]);
 
+  // Deep AI evaluation fetched asynchronously from backend (Gemini AI with fallback)
+  const [aiAnalysis, setAiAnalysis] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [personaCache, setPersonaCache] = useState({});
+
+  useEffect(() => {
+    if (!comparison || !Array.isArray(comparison.offers) || comparison.offers.length === 0) return;
+
+    // If already in client cache for this persona, use immediately (0ms latency)
+    if (personaCache[selectedPersona]) {
+      setAiAnalysis(personaCache[selectedPersona]);
+      setAiLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    setAiLoading(true);
+
+    fetch(`${API_BASE}/api/recommendations/ai`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ comparison, persona: selectedPersona }),
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        if (!isMounted) return;
+        if (data?.success && data?.recommendation) {
+          setAiAnalysis(data.recommendation);
+          setPersonaCache((prev) => ({
+            ...prev,
+            [selectedPersona]: data.recommendation,
+          }));
+        }
+      })
+      .catch((err) => {
+        console.warn("[SmartBuy] AI endpoint unavailable, using client engine:", err);
+      })
+      .finally(() => {
+        if (isMounted) setAiLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [comparison, selectedPersona, personaCache]);
+
+  // Prefer deep AI recommendation when available, otherwise client baseline
+  const analysis = aiAnalysis || clientAnalysis;
   const winner = analysis?.winner;
   const alternatives = analysis?.alternatives || [];
   const currentPersona = PERSONAS[selectedPersona] || PERSONAS.balanced;
@@ -168,7 +219,11 @@ export default function Recommendation() {
       <section className="ai-header">
         <div className="ai-header-content">
           <div className="ai-badge">
-            <span className="ai-sparkle">✦</span> SMARTBUY AI DECISION ENGINE
+            <span className="ai-sparkle">✦</span>{" "}
+            {analysis.ai_powered
+              ? "POWERED BY GEMINI AI"
+              : "SMARTBUY AI DECISION ENGINE"}
+            {aiLoading && <span className="ai-loading-pill"></span>}
           </div>
 
           <h1>
@@ -179,6 +234,15 @@ export default function Recommendation() {
 
           <p className="ai-verdict-p">{analysis.verdict_summary}</p>
 
+          {analysis.tradeoff_analysis && (
+            <div className="ai-tradeoff-banner">
+              <span className="tradeoff-icon">⚖️</span>
+              <span>
+                <strong>Key Tradeoff:</strong> {analysis.tradeoff_analysis}
+              </span>
+            </div>
+          )}
+
           <div className="ai-header-meta">
             <span className="confidence-tag">
               Confidence: <strong>{analysis.confidence}</strong>
@@ -187,6 +251,12 @@ export default function Recommendation() {
             <span>
               Evaluated <strong>{comparison.offers?.length || 2} marketplaces</strong>
             </span>
+            {analysis.model_used && (
+              <>
+                <span className="meta-dot">·</span>
+                <span className="model-tag">Model: {analysis.model_used}</span>
+              </>
+            )}
           </div>
         </div>
 

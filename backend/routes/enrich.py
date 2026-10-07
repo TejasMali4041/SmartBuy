@@ -8,6 +8,7 @@ Includes in-memory URL caching and in-flight deduplication to prevent
 duplicate API calls and conserve Bright Data tokens.
 """
 
+import re
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -120,8 +121,25 @@ def _enrich_single_offer(offer):
         # Ensure platform stays correct
         merged["platform"] = platform or merged.get("platform")
 
+        # Heal missing price:
+        # 1. Fall back to search offer price if scraper returned None
+        if not merged.get("price") and offer.get("price"):
+            merged["price"] = offer.get("price")
+            print(f"[SmartBuy Enrich] Retained search price for {platform}: Rs. {merged['price']}")
+
+        # 2. Extract price from description text if still missing (e.g. Flipkart 'Buy ... for Rs. 260.0')
+        if not merged.get("price"):
+            desc = str(merged.get("description") or detailed.get("description") or "")
+            m = re.search(r"(?:for\s+)?(?:rs\.?|₹)\s*(\d+(?:\.\d+)?)", desc, re.IGNORECASE)
+            if m:
+                try:
+                    merged["price"] = float(m.group(1))
+                    print(f"[SmartBuy Enrich] Healed missing price from description for {platform}: Rs. {merged['price']}")
+                except (ValueError, TypeError):
+                    pass
+
         print(
-            f"[SmartBuy Enrich] {platform} enriched successfully"
+            f"[SmartBuy Enrich] {platform} enriched successfully (price: {merged.get('price')})"
         )
 
         return merged

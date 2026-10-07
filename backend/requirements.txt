@@ -6,3 +6,6 @@ PyMySQL
 Werkzeug
 requests
 beautifulsoup4
+google-genai
+python-dotenv
+scikit-learn
